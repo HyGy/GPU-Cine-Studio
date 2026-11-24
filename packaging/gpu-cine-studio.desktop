@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=GPU Cine Studio
+Comment=Hardware-accelerated video editor with GPU support
+Exec=gpu-cine-studio
+Icon=gpu-cine-studio
+Terminal=false
+Categories=AudioVideo;Video;Qt;
+Keywords=video;editor;gpu;nvenc;nvdec;cinema;

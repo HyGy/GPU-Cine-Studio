@@ -1,0 +1,6 @@
+module GCSStyle
+MenuBar 6.0 MenuBar.qml
+MenuBarItem 6.0 MenuBarItem.qml
+Menu 6.0 Menu.qml
+MenuItem 6.0 MenuItem.qml
+MenuSeparator 6.0 MenuSeparator.qml

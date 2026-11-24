@@ -1,0 +1,71 @@
+# Build artifacts
+build/
+build-*/
+*.o
+*.so
+*.a
+moc_*
+qrc_*
+ui_*
+
+# IDE files
+.vscode/
+.idea/
+*.pro.user
+*.autosave
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Executables
+video-editor
+*.AppImage
+*.deb
+
+# Test files (optional - comment out if you want to commit test videos)
+tests/test_clips/*.mp4
+tests/test_clips/*.mkv
+.aider*
+
+# UI test fixtures / generated artifacts (large or machine-generated, not source)
+tests/sourceFiles/
+tests/testProjects/
+automaticTestInsertVideoFile/
+tests/ui/__pycache__/
+tests/ui/miss_screenshots/
+tests/ui/recordings/debugtest.json
+
+# Personal scratch files / external reference material
+2023-TET-BIH2
+test.tx
+test2.tx
+src/allProjectFiles.txt
+src/copyAllSrcFiles.sh
+doc/examples/
+
+# Locally-built GStreamer (source + build output) - used to try a
+# newer/custom-compiled GStreamer against this app without touching the
+# system install. Large (source + build artifacts), never meant to be
+# committed - the whole tree lives here only for convenience/co-location
+# with the project that uses it.
+/gstreamer/
+
+# Internal notes / personal working files (kept locally, not published)
+TODO.txt
+TODO_hibak.txt
+proxy_build_plan.md
+plan_*.md
+todo_deepseek.txt
+doc/conversation-track-system-2026-02-11.md
+doc/timeline-review-opus-2026-10-10.md
+doc/sourceCode/
+packaging/*.notused
+# UI test recordings embed absolute paths of the machine they were recorded on
+tests/ui/recordings/*.json
+.opencode/
+screenshots/
+tmp/
+macro_keyboard_12key/

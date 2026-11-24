@@ -1,0 +1,1883 @@
+diff --git a/subprojects/gst-editing-services/ges/ges-internal.h b/subprojects/gst-editing-services/ges/ges-internal.h
+index a57bf01..4d896f4 100644
+--- a/subprojects/gst-editing-services/ges/ges-internal.h
++++ b/subprojects/gst-editing-services/ges/ges-internal.h
+@@ -382,100 +382,108 @@ G_GNUC_INTERNAL void ges_base_xml_formatter_add_source          (GESBaseXmlForma
+                                                                  const gchar * track_id,
+                                                                  GstStructure *children_properties,
+                                                                  GstStructure *properties,
+                                                                  const gchar *metadatas);
+ 
+ G_GNUC_INTERNAL void ges_base_xml_formatter_add_group           (GESBaseXmlFormatter *self,
+                                                                  const gchar *name,
+                                                                  const gchar *properties,
+                                                                  const gchar *metadatas);
+ 
+ G_GNUC_INTERNAL void ges_base_xml_formatter_last_group_add_child(GESBaseXmlFormatter *self,
+                                                                  const gchar * id,
+                                                                  const gchar * name);
+ 
+ G_GNUC_INTERNAL void ges_base_xml_formatter_add_control_binding (GESBaseXmlFormatter * self,
+                                                                   const gchar * binding_type,
+                                                                   const gchar * source_type,
+                                                                   const gchar * property_name,
+                                                                   gint mode,
+                                                                   const gchar *track_id,
+                                                                   GSList * timed_values);
+ 
+ G_GNUC_INTERNAL void ges_base_xml_formatter_set_timeline_properties(GESBaseXmlFormatter * self,
+                                                                     GESTimeline *timeline,
+                                                                     const gchar *properties,
+                                                                     const gchar *metadatas);
+ 
+ G_GNUC_INTERNAL void ges_base_xml_formatter_end_current_clip       (GESBaseXmlFormatter *self);
+ 
+ G_GNUC_INTERNAL void ges_xml_formatter_deinit                      (void);
+ 
+ G_GNUC_INTERNAL gboolean set_property_foreach                   (const GstIdStr *fieldname,
+                                                                  const GValue * value,
+                                                                  GObject * object);
+ 
+ G_GNUC_INTERNAL GstElement * get_element_for_encoding_profile   (GstEncodingProfile *prof,
+                                                                  GstElementFactoryListType type);
+ 
+ /* Function to initialise GES */
+ G_GNUC_INTERNAL void _init_standard_transition_assets        (void);
+ G_GNUC_INTERNAL void _init_formatter_assets                  (void);
+ G_GNUC_INTERNAL void _deinit_formatter_assets                (void);
+ 
+ /* Utilities */
+ G_GNUC_INTERNAL gint element_start_compare                (GESTimelineElement * a,
+                                                            GESTimelineElement * b);
+ G_GNUC_INTERNAL gint element_end_compare                  (GESTimelineElement * a,
+                                                            GESTimelineElement * b);
+ G_GNUC_INTERNAL GstElementFactory *
+ ges_get_compositor_factory                                (void);
++G_GNUC_INTERNAL GstElementFactory *
++ges_get_compositor_factory_for_mode                       (gboolean gl);
++G_GNUC_INTERNAL gboolean
++ges_gl_mode_requested                                     (void);
++G_GNUC_INTERNAL gboolean
++ges_track_is_gl                                           (GESTrack * track);
++G_GNUC_INTERNAL gboolean
++ges_track_element_is_gl                                   (GESTrackElement * element);
+ 
+ G_GNUC_INTERNAL void
+ ges_callback_add (GSourceFunc func, gpointer udata, GDestroyNotify notify);
+ G_GNUC_INTERNAL void
+ ges_timeout_add (guint interval, GSourceFunc func, gpointer udata, GDestroyNotify notify);
+ 
+ G_GNUC_INTERNAL gboolean
+ ges_util_structure_get_clocktime (GstStructure *structure, const gchar *name,
+                                   GstClockTime *val, GESFrameNumber *frames);
+ 
+ G_GNUC_INTERNAL gboolean /* From ges-xml-formatter.c */
+ ges_util_can_serialize_spec (GParamSpec * spec);
+ 
+ /****************************************************
+  *              GESContainer                        *
+  ****************************************************/
+ G_GNUC_INTERNAL void _ges_container_sort_children         (GESContainer *container);
+ G_GNUC_INTERNAL void _ges_container_set_height            (GESContainer * container,
+                                                            guint32 height);
+ 
+ /****************************************************
+  *                  GESClip                         *
+  ****************************************************/
+ G_GNUC_INTERNAL void              ges_clip_set_layer              (GESClip *clip, GESLayer  *layer);
+ G_GNUC_INTERNAL GESTrackElement*  ges_clip_create_track_element   (GESClip *clip, GESTrackType type);
+ G_GNUC_INTERNAL GList*            ges_clip_create_track_elements  (GESClip *clip, GESTrackType type);
+ G_GNUC_INTERNAL gboolean          ges_clip_can_set_inpoint_of_child (GESClip * clip, GESTrackElement * child, GstClockTime inpoint, GError ** error);
+ G_GNUC_INTERNAL gboolean          ges_clip_can_set_max_duration_of_all_core (GESClip * clip, GstClockTime max_duration, GError ** error);
+ G_GNUC_INTERNAL gboolean          ges_clip_can_set_max_duration_of_child (GESClip * clip, GESTrackElement * child, GstClockTime max_duration, GError ** error);
+ G_GNUC_INTERNAL gboolean          ges_clip_can_set_active_of_child (GESClip * clip, GESTrackElement * child, gboolean active, GError ** error);
+ G_GNUC_INTERNAL gboolean          ges_clip_can_set_priority_of_child (GESClip * clip, GESTrackElement * child, guint32 priority, GError ** error);
+ G_GNUC_INTERNAL gboolean          ges_clip_can_set_track_of_child (GESClip * clip, GESTrackElement * child, GESTrack * tack, GError ** error);
+ G_GNUC_INTERNAL gboolean          ges_clip_can_set_time_property_of_child (GESClip * clip, GESTrackElement * child, GObject * prop_object, GParamSpec * pspec, const GValue * value, GError ** error);
+ G_GNUC_INTERNAL GstClockTime      ges_clip_duration_limit_with_new_children_inpoints (GESClip * clip, GHashTable * child_inpoints);
+ G_GNUC_INTERNAL GstClockTime      ges_clip_get_core_internal_time_from_timeline_time (GESClip * clip, GstClockTime timeline_time, gboolean * no_core, GError ** error);
+ G_GNUC_INTERNAL GstElement*       ges_clip_get_last_time_effect_filter           (GESClip * clip, GESTrack *track);
+ G_GNUC_INTERNAL void              ges_clip_empty_from_track       (GESClip * clip, GESTrack * track);
+ G_GNUC_INTERNAL void              ges_clip_set_add_error          (GESClip * clip, GError * error);
+ G_GNUC_INTERNAL void              ges_clip_take_add_error         (GESClip * clip, GError ** error);
+ G_GNUC_INTERNAL void              ges_clip_set_remove_error       (GESClip * clip, GError * error);
+ G_GNUC_INTERNAL void              ges_clip_take_remove_error      (GESClip * clip, GError ** error);
+ G_GNUC_INTERNAL gboolean          ges_clip_has_scale_effect       (GESClip * clip);
+ 
+ /****************************************************
+  *              GESLayer                            *
+  ****************************************************/
+ G_GNUC_INTERNAL gboolean ges_layer_resync_priorities (GESLayer * layer);
+ G_GNUC_INTERNAL void layer_set_priority               (GESLayer * layer, guint priority, gboolean emit);
+ 
+ /****************************************************
+diff --git a/subprojects/gst-editing-services/ges/ges-smart-video-mixer.c b/subprojects/gst-editing-services/ges/ges-smart-video-mixer.c
+index 1a153f6..a0f5373 100644
+--- a/subprojects/gst-editing-services/ges/ges-smart-video-mixer.c
++++ b/subprojects/gst-editing-services/ges/ges-smart-video-mixer.c
+@@ -432,126 +432,160 @@ compositor_sync_properties_with_meta (GstElement * compositor,
+   return TRUE;
+ }
+ 
+ static void
+ ges_smart_mixer_samples_selected_cb (GstElement * compositor,
+     GstSegment * segment, GstClockTime pts, GstClockTime dts,
+     GstClockTime duration, GstStructure * info, GESSmartMixer * self)
+ {
+   gst_element_foreach_sink_pad (compositor,
+       (GstElementForeachPadFunc) compositor_sync_properties_with_meta, self);
+ }
+ 
+ /****************************************************
+  *              GObject vmethods                    *
+  ****************************************************/
+ static void
+ ges_smart_mixer_dispose (GObject * object)
+ {
+   GESSmartMixer *self = GES_SMART_MIXER (object);
+ 
+   if (self->pads_infos != NULL) {
+     g_hash_table_unref (self->pads_infos);
+     self->pads_infos = NULL;
+   }
+   gst_clear_object (&self->real_mixer);
+ 
+   G_OBJECT_CLASS (ges_smart_mixer_parent_class)->dispose (object);
+ }
+ 
+ static void
+ ges_smart_mixer_finalize (GObject * object)
+ {
+   GESSmartMixer *self = GES_SMART_MIXER (object);
+ 
+   g_mutex_clear (&self->lock);
+ 
+   G_OBJECT_CLASS (ges_smart_mixer_parent_class)->finalize (object);
+ }
+ 
+ static void
+ ges_smart_mixer_constructed (GObject * obj)
+ {
+   GstPad *pad;
+   GstElement *identity, *videoconvert;
+   GESSmartMixer *self = GES_SMART_MIXER (obj);
+   gchar *cname = g_strdup_printf ("%s-compositor", GST_OBJECT_NAME (self));
+ 
+   G_OBJECT_CLASS (ges_smart_mixer_parent_class)->constructed (obj);
+ 
+   self->mixer =
+-      gst_element_factory_create (ges_get_compositor_factory (), cname);
+-  self->ABI.abi.has_operator =
++      gst_element_factory_create (ges_get_compositor_factory_for_mode
++      (self->gl_mode), cname);
++  /* glvideomixer pads have no "operator" (blending is done with their blend
++   * functions instead, see ges-video-transition.c) */
++  self->ABI.abi.has_operator = !self->gl_mode &&
+       gst_compositor_operator_get_type_and_default_value (NULL) != G_TYPE_NONE;
+   g_free (cname);
+ 
+   if (GST_IS_BIN (self->mixer)) {
+     g_object_get (self->mixer, "mixer", &self->real_mixer, NULL);
+     g_assert (self->real_mixer);
+   } else {
+     self->real_mixer = gst_object_ref (self->mixer);
+   }
+ 
+   g_object_set (self->real_mixer, "background", 1, "emit-signals", TRUE, NULL);
+   g_signal_connect (self->real_mixer, "samples-selected",
+       G_CALLBACK (ges_smart_mixer_samples_selected_cb), self);
+ 
+   /* See https://gitlab.freedesktop.org/gstreamer/gstreamer/issues/310 */
+   GST_FIXME ("Stop dropping allocation query when it is not required anymore.");
+   identity = gst_element_factory_make ("identity", NULL);
+   g_object_set (identity, "drop-allocation", TRUE, NULL);
+   g_assert (identity);
+ 
+-  videoconvert = gst_element_factory_make ("videoconvert", NULL);
++  /* GL mode: keep GLMemory flowing out of the mixer */
++  videoconvert = gst_element_factory_make (self->gl_mode ? "identity" :
++      "videoconvert", NULL);
+   g_assert (videoconvert);
+ 
+   gst_bin_add_many (GST_BIN (self), self->mixer, identity, videoconvert, NULL);
+   gst_element_link_many (self->mixer, identity, videoconvert, NULL);
+ 
+   pad = gst_element_get_static_pad (videoconvert, "src");
+   self->srcpad = gst_ghost_pad_new ("src", pad);
+   gst_pad_set_active (self->srcpad, TRUE);
+   gst_object_unref (pad);
+   gst_element_add_pad (GST_ELEMENT (self), self->srcpad);
+ }
+ 
+ 
++enum
++{
++  PROP_MIXER_0,
++  PROP_GL_MODE,
++};
++
++static void
++ges_smart_mixer_set_property (GObject * object, guint prop_id,
++    const GValue * value, GParamSpec * pspec)
++{
++  GESSmartMixer *self = GES_SMART_MIXER (object);
++
++  switch (prop_id) {
++    case PROP_GL_MODE:
++      self->gl_mode = g_value_get_boolean (value);
++      break;
++    default:
++      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
++      break;
++  }
++}
++
+ static void
+ ges_smart_mixer_class_init (GESSmartMixerClass * klass)
+ {
+ /*   GstBinClass *parent_class = GST_BIN_CLASS (klass);
+  */
+   GObjectClass *object_class = G_OBJECT_CLASS (klass);
+   GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
+ 
+   /* FIXME Make sure the MixerClass doesn get destroy before ourself */
+   gst_element_class_add_static_pad_template (element_class, &src_template);
+   gst_element_class_add_static_pad_template (element_class, &sink_template);
+   gst_element_class_set_static_metadata (element_class, "GES Smart mixer",
+       "Generic/Audio",
+       "Use mixer making use of GES information",
+       "Thibault Saunier <thibault.saunier@collabora.com>");
+ 
+   element_class->request_new_pad = GST_DEBUG_FUNCPTR (_request_new_pad);
+   element_class->release_pad = GST_DEBUG_FUNCPTR (_release_pad);
+ 
++  object_class->set_property = ges_smart_mixer_set_property;
++  g_object_class_install_property (object_class, PROP_GL_MODE,
++      g_param_spec_boolean ("gl-mode", "GL mode",
++          "Composite with glvideomixer, keeping frames in GL memory", FALSE,
++          G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
++
+   object_class->dispose = ges_smart_mixer_dispose;
+   object_class->finalize = ges_smart_mixer_finalize;
+   object_class->constructed = ges_smart_mixer_constructed;
+ }
+ 
+ static void
+ ges_smart_mixer_init (GESSmartMixer * self)
+ {
+   g_mutex_init (&self->lock);
+   self->pads_infos = g_hash_table_new_full (g_direct_hash, g_direct_equal,
+       NULL, (GDestroyNotify) pad_infos_unref);
+ }
+ 
+ GstElement *
+ ges_smart_mixer_new (GESTrack * track)
+ {
+-  GESSmartMixer *self = g_object_new (GES_TYPE_SMART_MIXER, NULL);
++  GESSmartMixer *self = g_object_new (GES_TYPE_SMART_MIXER, "gl-mode",
++      ges_track_is_gl (track), NULL);
+ 
+   /* FIXME Make mixer smart and let it properly negotiate caps! */
+   return GST_ELEMENT (self);
+ }
+diff --git a/subprojects/gst-editing-services/ges/ges-smart-video-mixer.h b/subprojects/gst-editing-services/ges/ges-smart-video-mixer.h
+index bfd8fbe..c8e1037 100644
+--- a/subprojects/gst-editing-services/ges/ges-smart-video-mixer.h
++++ b/subprojects/gst-editing-services/ges/ges-smart-video-mixer.h
+@@ -8,71 +8,72 @@
+  * by the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * gst-editing-services is distributed in the hope that it will be useful, but
+  * WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  * See the GNU Lesser General Public License for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.";
+  */
+ 
+ #pragma once
+ 
+ #include <glib-object.h>
+ #include <gst/gst.h>
+ 
+ #include "ges-track.h"
+ 
+ G_BEGIN_DECLS
+ 
+ #define GES_TYPE_SMART_MIXER             (ges_smart_mixer_get_type ())
+ #define GES_SMART_MIXER(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GES_TYPE_SMART_MIXER, GESSmartMixer))
+ #define GES_SMART_MIXER_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), GES_TYPE_SMART_MIXER, GESSmartMixerClass))
+ #define GES_IS_SMART_MIXER(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GES_TYPE_SMART_MIXER))
+ #define GES_IS_SMART_MIXER_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), GES_TYPE_SMART_MIXER))
+ #define GES_SMART_MIXER_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), GES_TYPE_SMART_MIXER, GESSmartMixerClass))
+ 
+ typedef struct _GESSmartMixerClass GESSmartMixerClass;
+ typedef struct _GESSmartMixer GESSmartMixer;
+ 
+ struct _GESSmartMixerClass
+ {
+   GstBinClass parent_class;
+ 
+   gpointer _ges_reserved[GES_PADDING];
+ };
+ 
+ struct _GESSmartMixer
+ {
+   GstBin parent_instance;
+ 
+   GHashTable *pads_infos;
+   GstPad *srcpad;
+   GstElement *mixer;
+   GstElement *real_mixer;
+   GMutex lock;
+ 
+   GstCaps *caps;
+   gboolean is_transition;
++  gboolean gl_mode;
+ 
+   union {
+     gpointer _ges_reserved[GES_PADDING];
+ 
+     struct {
+       gboolean has_operator;
+     } abi;
+ 
+   } ABI;
+ };
+ 
+ G_GNUC_INTERNAL
+ GType ges_smart_mixer_get_type (void);
+ 
+ G_GNUC_INTERNAL GstPad *
+ ges_smart_mixer_get_mixer_pad (GESSmartMixer *self, GstPad **mixerpad);
+ 
+ G_GNUC_INTERNAL
+ GstElement*   ges_smart_mixer_new      (GESTrack *track);
+ 
+ G_END_DECLS
+\ No newline at end of file
+diff --git a/subprojects/gst-editing-services/ges/ges-track.c b/subprojects/gst-editing-services/ges/ges-track.c
+index 54a6b68..d3e96f5 100644
+--- a/subprojects/gst-editing-services/ges/ges-track.c
++++ b/subprojects/gst-editing-services/ges/ges-track.c
+@@ -38,100 +38,101 @@
+  * its #GESTimelineElement:duration.
+  *
+  * For most users, it will usually be sufficient to add newly created
+  * tracks to a timeline, but never directly add an element to a track.
+  * Whenever a #GESClip is added to a timeline, the clip adds its
+  * elements to the timeline's tracks and assumes responsibility for
+  * updating them.
+  */
+ #ifdef HAVE_CONFIG_H
+ #include "config.h"
+ #endif
+ 
+ #include "ges-internal.h"
+ #include "ges-track.h"
+ #include "ges-track-element.h"
+ #include "ges-meta-container.h"
+ #include "ges-video-track.h"
+ #include "ges-audio-track.h"
+ 
+ #define CHECK_THREAD(track) g_assert(track->priv->valid_thread == g_thread_self())
+ 
+ static GstStaticPadTemplate ges_track_src_pad_template =
+ GST_STATIC_PAD_TEMPLATE ("src",
+     GST_PAD_SRC,
+     GST_PAD_ALWAYS,
+     GST_STATIC_CAPS_ANY);
+ 
+ /* Structure that represents gaps and keep knowledge
+  * of the gaps filled in the track */
+ typedef struct
+ {
+   GstElement *nleobj;
+ 
+   GstClockTime start;
+   GstClockTime duration;
+   GESTrack *track;
+ } Gap;
+ 
+ struct _GESTrackPrivate
+ {
+   /*< private > */
+   GESTimeline *timeline;
+   GSequence *trackelements_by_start;
+   GHashTable *trackelements_iter;
+   GList *gaps;
+   gboolean last_gap_disabled;
+ 
+   guint64 duration;
+ 
+   GstCaps *caps;
++  gboolean gl_mode;
+   GstCaps *restriction_caps;
+ 
+   GstElement *composition;      /* The composition associated with this track */
+   GstPad *srcpad;               /* The source GhostPad */
+ 
+   gboolean updating;
+ 
+   gboolean mixing;
+   GstElement *mixing_operation;
+   GstElement *capsfilter;
+ 
+   /* Virtual method to create GstElement that fill gaps */
+   GESCreateElementForGapFunc create_element_for_gaps;
+ 
+   GThread *valid_thread;
+ };
+ 
+ enum
+ {
+   ARG_0,
+   ARG_CAPS,
+   ARG_RESTRICTION_CAPS,
+   ARG_TYPE,
+   ARG_DURATION,
+   ARG_MIXING,
+   ARG_ID,
+   ARG_LAST,
+   TRACK_ELEMENT_ADDED,
+   TRACK_ELEMENT_REMOVED,
+   COMMITED,
+   LAST_SIGNAL
+ };
+ 
+ static guint ges_track_signals[LAST_SIGNAL] = { 0 };
+ 
+ static GParamSpec *properties[ARG_LAST];
+ 
+ G_DEFINE_TYPE_WITH_CODE (GESTrack, ges_track, GST_TYPE_BIN,
+     G_ADD_PRIVATE (GESTrack)
+     G_IMPLEMENT_INTERFACE (GES_TYPE_META_CONTAINER, NULL));
+ 
+ 
+ static void composition_duration_cb (GstElement * composition, GParamSpec * arg
+     G_GNUC_UNUSED, GESTrack * obj);
+ static void ges_track_set_caps (GESTrack * track, const GstCaps * caps);
+ 
+ /* Private methods/functions/callbacks */
+ static void
+ add_trackelement_to_list_foreach (GESTrackElement * trackelement, GList ** list)
+ {
+@@ -833,100 +834,101 @@ ges_track_class_init (GESTrackClass * klass)
+    * Will be emitted after a track element is added to the track.
+    */
+   ges_track_signals[TRACK_ELEMENT_ADDED] =
+       g_signal_new ("track-element-added", G_TYPE_FROM_CLASS (klass),
+       G_SIGNAL_RUN_FIRST, 0, NULL, NULL, NULL,
+       G_TYPE_NONE, 1, GES_TYPE_TRACK_ELEMENT);
+ 
+   /**
+    * GESTrack::track-element-removed:
+    * @object: The #GESTrack
+    * @effect: The element that was removed
+    *
+    * Will be emitted after a track element is removed from the track.
+    */
+   ges_track_signals[TRACK_ELEMENT_REMOVED] =
+       g_signal_new ("track-element-removed", G_TYPE_FROM_CLASS (klass),
+       G_SIGNAL_RUN_FIRST, 0, NULL, NULL, NULL,
+       G_TYPE_NONE, 1, GES_TYPE_TRACK_ELEMENT);
+ 
+   /**
+    * GESTrack::commited:
+    * @track: The #GESTrack
+    *
+    * This signal will be emitted once the changes initiated by
+    * ges_track_commit() have been executed in the backend. In particular,
+    * this will be emitted whenever the underlying #nlecomposition has been
+    * committed (see #nlecomposition::commited).
+    */
+   ges_track_signals[COMMITED] =
+       g_signal_new ("commited", G_TYPE_FROM_CLASS (klass),
+       G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+ 
+   klass->get_mixing_element = NULL;
+ }
+ 
+ static void
+ ges_track_init (GESTrack * self)
+ {
+   self->priv = ges_track_get_instance_private (self);
+   self->priv->valid_thread = g_thread_self ();
+ 
+   self->priv->composition = gst_element_factory_make ("nlecomposition", NULL);
+   self->priv->capsfilter = gst_element_factory_make ("capsfilter", NULL);
+   self->priv->updating = TRUE;
+   self->priv->trackelements_by_start = g_sequence_new (NULL);
+   self->priv->trackelements_iter =
+       g_hash_table_new (g_direct_hash, g_direct_equal);
+   self->priv->create_element_for_gaps = NULL;
+   self->priv->gaps = NULL;
+   self->priv->mixing = TRUE;
++  self->priv->gl_mode = ges_gl_mode_requested ();
+   self->priv->restriction_caps = NULL;
+   self->priv->last_gap_disabled = TRUE;
+ 
+   g_signal_connect (G_OBJECT (self->priv->composition), "notify::duration",
+       G_CALLBACK (composition_duration_cb), self);
+   g_signal_connect (G_OBJECT (self->priv->composition), "commited",
+       G_CALLBACK (composition_commited_cb), self);
+ }
+ 
+ /**
+  * ges_track_new:
+  * @type: The #GESTrack:track-type for the track
+  * @caps: (transfer full): The #GESTrack:caps for the track
+  *
+  * Creates a new track with the given track-type and caps.
+  *
+  * If @type is #GES_TRACK_TYPE_VIDEO, and @caps is a subset of
+  * "video/x-raw(ANY)", then a #GESVideoTrack is created. This will
+  * automatically choose a gap creation method suitable for video data. You
+  * will likely want to set #GESTrack:restriction-caps separately. You may
+  * prefer to use the ges_video_track_new() method instead.
+  *
+  * If @type is #GES_TRACK_TYPE_AUDIO, and @caps is a subset of
+  * "audio/x-raw(ANY)", then a #GESAudioTrack is created. This will
+  * automatically choose a gap creation method suitable for audio data, and
+  * will set the #GESTrack:restriction-caps to the default for
+  * #GESAudioTrack. You may prefer to use the ges_audio_track_new() method
+  * instead.
+  *
+  * Otherwise, a plain #GESTrack is returned. You will likely want to set
+  * the #GESTrack:restriction-caps and call
+  * ges_track_set_create_element_for_gap_func() on the returned track.
+  *
+  * Returns: (transfer floating): A new track.
+  */
+ GESTrack *
+ ges_track_new (GESTrackType type, GstCaps * caps)
+ {
+   GESTrack *track;
+   GstCaps *tmpcaps;
+ 
+   /* TODO Be smarter with well known track types */
+   if (type == GES_TRACK_TYPE_VIDEO) {
+     tmpcaps = gst_caps_new_empty_simple ("video/x-raw");
+     gst_caps_set_features (tmpcaps, 0, gst_caps_features_new_any ());
+ 
+     if (gst_caps_is_subset (caps, tmpcaps)) {
+       track = GES_TRACK (ges_video_track_new ());
+       ges_track_set_caps (track, caps);
+ 
+@@ -1343,100 +1345,106 @@ ges_track_remove_element_full (GESTrack * track, GESTrackElement * object,
+   g_return_val_if_fail (!error || !*error, FALSE);
+ 
+   if (!track->priv->timeline
+       || !ges_timeline_is_disposed (track->priv->timeline))
+     CHECK_THREAD (track);
+ 
+   return remove_element_internal (track, object, TRUE, error);
+ }
+ 
+ /**
+  * ges_track_remove_element:
+  * @track: A #GESTrack
+  * @object: The element to remove
+  *
+  * See ges_track_remove_element_full(), which also returns an error.
+  *
+  * Returns: %TRUE if @object was successfully removed from @track.
+  */
+ gboolean
+ ges_track_remove_element (GESTrack * track, GESTrackElement * object)
+ {
+   return ges_track_remove_element_full (track, object, NULL);
+ }
+ 
+ /**
+  * ges_track_get_caps:
+  * @track: A #GESTrack
+  *
+  * Get the #GESTrack:caps of the track.
+  *
+  * Returns: (nullable): The caps of @track.
+  */
+ const GstCaps *
+ ges_track_get_caps (GESTrack * track)
+ {
+   g_return_val_if_fail (GES_IS_TRACK (track), NULL);
+   CHECK_THREAD (track);
+ 
+   return track->priv->caps;
+ }
+ 
+ /**
+  * ges_track_get_timeline:
+  * @track: A #GESTrack
+  *
+  * Get the timeline this track belongs to.
+  *
+  * Returns: (nullable): The timeline that @track belongs to, or %NULL if
+  * it does not belong to a timeline.
+  */
++gboolean
++ges_track_is_gl (GESTrack * track)
++{
++  return track->priv->gl_mode;
++}
++
+ const GESTimeline *
+ ges_track_get_timeline (GESTrack * track)
+ {
+   g_return_val_if_fail (GES_IS_TRACK (track), NULL);
+   CHECK_THREAD (track);
+ 
+   return track->priv->timeline;
+ }
+ 
+ /**
+  * ges_track_get_mixing:
+  * @track: A #GESTrack
+  *
+  * Gets the #GESTrack:mixing of the track.
+  *
+  * Returns: Whether @track is mixing.
+  */
+ gboolean
+ ges_track_get_mixing (GESTrack * track)
+ {
+   g_return_val_if_fail (GES_IS_TRACK (track), FALSE);
+ 
+   return track->priv->mixing;
+ }
+ 
+ /**
+  * ges_track_commit:
+  * @track: A #GESTrack
+  *
+  * Commits all the pending changes for the elements contained in the
+  * track.
+  *
+  * When changes are made to the timing or priority of elements within a
+  * track, they are not directly executed for the underlying
+  * #nlecomposition and its children. This method will finally execute
+  * these changes so they are reflected in the data output of the track.
+  *
+  * Any pending changes will be executed in the backend. The
+  * #GESTimeline::commited signal will be emitted once this has completed.
+  *
+  * Note that ges_timeline_commit() will call this method on all of its
+  * tracks, so you are unlikely to need to use this directly.
+  *
+  * Returns: %TRUE if pending changes were committed, or %FALSE if nothing
+  * needed to be committed.
+  */
+ gboolean
+ ges_track_commit (GESTrack * track)
+ {
+   g_return_val_if_fail (GES_IS_TRACK (track), FALSE);
+diff --git a/subprojects/gst-editing-services/ges/ges-utils.c b/subprojects/gst-editing-services/ges/ges-utils.c
+index dd96004..48795cc 100644
+--- a/subprojects/gst-editing-services/ges/ges-utils.c
++++ b/subprojects/gst-editing-services/ges/ges-utils.c
+@@ -256,118 +256,170 @@ ges_util_structure_get_clocktime (GstStructure * structure, const gchar * name,
+ 
+   if (frames)
+     *frames = GES_FRAME_NUMBER_NONE;
+ 
+   found = TRUE;
+   if (val && G_VALUE_TYPE (gvalue) == GST_TYPE_CLOCK_TIME) {
+     *val = (GstClockTime) g_value_get_uint64 (gvalue);
+   } else if (val && G_VALUE_TYPE (gvalue) == G_TYPE_UINT64) {
+     *val = (GstClockTime) g_value_get_uint64 (gvalue);
+   } else if (val && G_VALUE_TYPE (gvalue) == G_TYPE_UINT) {
+     *val = (GstClockTime) g_value_get_uint (gvalue);
+   } else if (val && G_VALUE_TYPE (gvalue) == G_TYPE_INT) {
+     *val = (GstClockTime) g_value_get_int (gvalue);
+   } else if (val && G_VALUE_TYPE (gvalue) == G_TYPE_INT64) {
+     *val = (GstClockTime) g_value_get_int64 (gvalue);
+   } else if (val && G_VALUE_TYPE (gvalue) == G_TYPE_DOUBLE) {
+     gdouble d = g_value_get_double (gvalue);
+ 
+     if (d == -1.0)
+       *val = GST_CLOCK_TIME_NONE;
+     else
+       *val = d * GST_SECOND;
+   } else if (frames && G_VALUE_TYPE (gvalue) == G_TYPE_STRING) {
+     const gchar *str = g_value_get_string (gvalue);
+ 
+     found = FALSE;
+     if (str && str[0] == 'f') {
+       GValue v = G_VALUE_INIT;
+ 
+       g_value_init (&v, G_TYPE_UINT64);
+       if (gst_value_deserialize (&v, &str[1])) {
+         *frames = g_value_get_uint64 (&v);
+         if (val)
+           *val = GST_CLOCK_TIME_NONE;
+         found = TRUE;
+       }
+       g_value_reset (&v);
+     }
+   } else {
+     found = FALSE;
+ 
+   }
+ 
+   return found;
+ }
+ 
+ 
+ GstElementFactory *
+ ges_get_compositor_factory (void)
+ {
+-  GList *result;
++  GList *result, *l;
+ 
+   if (compositor_factory)
+     return compositor_factory;
+ 
+   result = gst_registry_feature_filter (gst_registry_get (),
+       (GstPluginFeatureFilter) find_compositor, FALSE, NULL);
+ 
+   /* sort on rank and name */
+   result = g_list_sort (result, gst_plugin_feature_rank_compare_func);
+   g_assert (result);
+ 
+-  compositor_factory = result->data;
++  /* glvideomixer is only ever used through GL mode, never as the default */
++  for (l = result; l; l = l->next) {
++    if (g_strcmp0 (GST_OBJECT_NAME (l->data), "glvideomixer") != 0)
++      break;
++  }
++  compositor_factory = l ? l->data : result->data;
+   gst_plugin_feature_list_free (result);
+ 
+   return compositor_factory;
+ }
+ 
++GstElementFactory *
++ges_get_compositor_factory_for_mode (gboolean gl)
++{
++  static GstElementFactory *gl_factory = NULL;
++
++  if (!gl)
++    return ges_get_compositor_factory ();
++
++  if (!gl_factory)
++    gl_factory = gst_element_factory_find ("glvideomixer");
++
++  return gl_factory ? gl_factory : ges_get_compositor_factory ();
++}
++
++/* GL mode: a track (and the sources/transitions inside it) composited by
++ * glvideomixer keeps frames in GLMemory instead of round-tripping through
++ * system memory. It is chosen per track, at track creation time, from the
++ * GES_GL_MODE=1 environment variable (so a preview timeline and an export
++ * timeline can coexist with different modes) and stored in the track. */
++gboolean
++ges_gl_mode_requested (void)
++{
++  const gchar *v = g_getenv ("GES_GL_MODE");
++  GstElementFactory *f;
++
++  if (v == NULL || v[0] != '1')
++    return FALSE;
++
++  f = gst_element_factory_find ("glvideomixer");
++  if (!f)
++    return FALSE;
++  gst_object_unref (f);
++
++  return TRUE;
++}
++
++gboolean
++ges_track_element_is_gl (GESTrackElement * element)
++{
++  GESTrack *track = ges_track_element_get_track (element);
++
++  if (track)
++    return ges_track_is_gl (track);
++
++  return ges_gl_mode_requested ();
++}
++
+ void
+ ges_timeout_add (guint interval, GSourceFunc func, gpointer udata,
+     GDestroyNotify notify)
+ {
+   GMainContext *context = g_main_context_get_thread_default ();
+   GSource *source = g_timeout_source_new (interval);
+ 
+   if (!context)
+     context = g_main_context_default ();
+ 
+   g_source_set_callback (source, func, udata, notify);
+   g_source_attach (source, context);
+   g_source_unref (source);
+ }
+ 
+ void
+ ges_callback_add (GSourceFunc func, gpointer udata, GDestroyNotify notify)
+ {
+   GMainContext *context = g_main_context_get_thread_default ();
+   GSource *source = g_idle_source_new ();
+   if (!context)
+     context = g_main_context_default ();
+ 
+   g_source_set_callback (source, func, udata, notify);
+   g_source_set_priority (source, G_PRIORITY_DEFAULT);
+   g_source_attach (source, context);
+   g_source_unref (source);
+ }
+ 
+ gboolean
+ ges_nle_composition_add_object (GstElement * comp, GstElement * object)
+ {
+   return gst_bin_add (GST_BIN (comp), object);
+ }
+ 
+ gboolean
+ ges_nle_composition_remove_object (GstElement * comp, GstElement * object)
+ {
+   return gst_bin_remove (GST_BIN (comp), object);
+ }
+ 
+ gboolean
+ ges_nle_object_commit (GstElement * nlesource, gboolean recurse)
+ {
+   gboolean ret;
+ 
+   g_signal_emit_by_name (nlesource, "commit", recurse, &ret);
+ 
+   return ret;
+ }
+diff --git a/subprojects/gst-editing-services/ges/ges-video-source.c b/subprojects/gst-editing-services/ges/ges-video-source.c
+index d213915..b32f7db 100644
+--- a/subprojects/gst-editing-services/ges/ges-video-source.c
++++ b/subprojects/gst-editing-services/ges/ges-video-source.c
+@@ -73,150 +73,176 @@ G_DEFINE_ABSTRACT_TYPE_WITH_CODE (GESVideoSource, ges_video_source,
+         ges_extractable_interface_init));
+ 
+ /* TrackElement VMethods */
+ 
+ static gboolean
+ _set_priority (GESTimelineElement * element, guint32 priority)
+ {
+   gboolean res;
+   GESVideoSource *self = GES_VIDEO_SOURCE (element);
+ 
+   res = GES_TIMELINE_ELEMENT_CLASS (parent_class)->set_priority (element,
+       priority);
+ 
+   if (res && self->priv->positioner)
+     g_object_set (self->priv->positioner, "zorder", G_MAXUINT - priority, NULL);
+ 
+   return res;
+ }
+ 
+ 
+ static gboolean
+ _set_parent (GESTimelineElement * element, GESTimelineElement * parent)
+ {
+   GESVideoSource *self = GES_VIDEO_SOURCE (element);
+ 
+   if (!parent)
+     return TRUE;
+ 
+   /* Some subclass might have different access to its natural size only
+    * once it knows its parent */
+   ges_video_source_get_natural_size (GES_VIDEO_SOURCE (self),
+       &self->priv->positioner->natural_width,
+       &self->priv->positioner->natural_height);
+ 
+   return TRUE;
+ }
+ 
+ 
+ static gboolean
+ ges_video_source_create_filters (GESVideoSource * self, GPtrArray * elements,
+     gboolean needs_converters)
+ {
+   GESTrackElement *trksrc = GES_TRACK_ELEMENT (self);
+   GstElement *positioner, *videoflip, *capsfilter, *videorate;
+   const gchar *positioner_props[]
+       = { "alpha", "posx", "fposx", "posy", "fposy", "width", "fwidth",
+     "height", "fheight", "operator", "zorder", NULL
+   };
+   const gchar *videoflip_props[] = { "video-direction", NULL };
+   gchar *ename = NULL;
++  gboolean gl_mode = needs_converters && ges_track_element_is_gl (trksrc);
+ 
++  videoflip = NULL;
+   g_ptr_array_add (elements, gst_element_factory_make ("queue", NULL));
+ 
+   /* That positioner will add metadata to buffers according to its
+      properties, acting like a proxy for our smart-mixer dynamic pads. */
+   positioner = gst_element_factory_make ("framepositioner", NULL);
+   g_object_set (positioner, "zorder",
+       G_MAXUINT - GES_TIMELINE_ELEMENT_PRIORITY (self), NULL);
+   g_ptr_array_add (elements, positioner);
+ 
+-  if (needs_converters)
++  if (gl_mode) {
++    /* GL mode: frames stay in GLMemory (or get uploaded here when the source
++     * is a CPU one); scaling and positioning are done by glvideomixer from
++     * the framepositioner meta. No GL videoflip exists, so image
++     * orientation tags are not applied in this mode. */
++    g_ptr_array_add (elements, gst_element_factory_make ("glupload", NULL));
++    g_ptr_array_add (elements, gst_element_factory_make ("glcolorconvert",
++            NULL));
++    /* The GL counterpart of the videoscale that CPU mode has here: GES
++     * pins this source's capsfilter to the PAR-corrected natural size
++     * (gstframepositioner.c), and glvideomixer additionally applies the
++     * input PAR on top of the pad size, so a stream with non-square pixels
++     * (every proxy we generate, and anamorphic/HDV/DV originals) must leave
++     * the chain at that size with PAR 1/1 - without it the size
++     * requirement travels upstream, the decoder refuses its input and
++     * qtdemux stops with not-negotiated. A pass-through when input and
++     * output already match. */
++    g_ptr_array_add (elements, gst_element_factory_make ("glcolorscale",
++            NULL));
++  } else if (needs_converters) {
+     g_ptr_array_add (elements, gst_element_factory_make ("videoconvert", NULL));
++  }
+ 
+-  /* If there's image-orientation tag, make sure the image is correctly oriented
+-   * before we scale it. */
+-  videoflip = gst_element_factory_make ("videoflip", "track-element-videoflip");
+-  g_object_set (videoflip, "video-direction", GST_VIDEO_ORIENTATION_AUTO, NULL);
+-  g_ptr_array_add (elements, videoflip);
+-
++  if (!gl_mode) {
++    /* If there's image-orientation tag, make sure the image is correctly
++     * oriented before we scale it. */
++    videoflip =
++        gst_element_factory_make ("videoflip", "track-element-videoflip");
++    g_object_set (videoflip, "video-direction", GST_VIDEO_ORIENTATION_AUTO,
++        NULL);
++    g_ptr_array_add (elements, videoflip);
++  }
+ 
+-  if (needs_converters) {
++  if (needs_converters && !gl_mode) {
+     ename =
+         g_strdup_printf ("ges%s-videoscale", GES_TIMELINE_ELEMENT_NAME (self));
+     g_ptr_array_add (elements, gst_element_factory_make ("videoscale", ename));
+     g_free (ename);
+     ename = g_strdup_printf ("ges%s-convert", GES_TIMELINE_ELEMENT_NAME (self));
+     g_ptr_array_add (elements, gst_element_factory_make ("videoconvert",
+             ename));
+     g_free (ename);
+   }
+   ename = g_strdup_printf ("ges%s-rate", GES_TIMELINE_ELEMENT_NAME (self));
+   videorate = gst_element_factory_make ("videorate", ename);
+   g_object_set (videorate, "max-closing-segment-duplication-duration",
+       GST_CLOCK_TIME_NONE, NULL);
+   g_ptr_array_add (elements, videorate);
+ 
+   g_free (ename);
+   ename =
+       g_strdup_printf ("ges%s-capsfilter", GES_TIMELINE_ELEMENT_NAME (self));
+   capsfilter = gst_element_factory_make ("capsfilter", ename);
+   g_free (ename);
+   g_ptr_array_add (elements, capsfilter);
+ 
+   ges_frame_positioner_set_source_and_filter (GST_FRAME_POSITIONNER
+       (positioner), trksrc, capsfilter);
+ 
+   ges_track_element_add_children_props (trksrc, positioner, NULL, NULL,
+       positioner_props);
+-  ges_track_element_add_children_props (trksrc, videoflip, NULL, NULL,
+-      videoflip_props);
++  if (videoflip)
++    ges_track_element_add_children_props (trksrc, videoflip, NULL, NULL,
++        videoflip_props);
+ 
+   self->priv->positioner = GST_FRAME_POSITIONNER (positioner);
+   self->priv->positioner->scale_in_compositor =
+       !GES_VIDEO_SOURCE_GET_CLASS (self)->ABI.abi.disable_scale_in_compositor;
+   ges_video_source_get_natural_size (self,
+       &self->priv->positioner->natural_width,
+       &self->priv->positioner->natural_height);
+ 
+   self->priv->capsfilter = capsfilter;
+ 
+   return TRUE;
+ }
+ 
+ static GstElement *
+ ges_video_source_create_element (GESTrackElement * trksrc)
+ {
+   GstElement *topbin;
+   GstElement *sub_element;
+   GESVideoSourceClass *vsource_class = GES_VIDEO_SOURCE_GET_CLASS (trksrc);
+   GESSourceClass *source_class = GES_SOURCE_GET_CLASS (trksrc);
+   GESVideoSource *self;
+   gboolean needs_converters = TRUE;
+   GPtrArray *elements;
+ 
+   if (!source_class->create_source)
+     return NULL;
+ 
+   sub_element = source_class->create_source (GES_SOURCE (trksrc));
+ 
+   self = (GESVideoSource *) trksrc;
+   if (vsource_class->ABI.abi.needs_converters)
+     needs_converters = vsource_class->ABI.abi.needs_converters (self);
+ 
+   elements = g_ptr_array_new ();
+   g_assert (vsource_class->ABI.abi.create_filters);
+   if (!vsource_class->ABI.abi.create_filters (self, elements, needs_converters)) {
+     g_ptr_array_free (elements, TRUE);
+     gst_object_unref (sub_element);
+ 
+     return NULL;
+   }
+ 
+   topbin = ges_source_create_topbin (GES_SOURCE (trksrc), "videosrcbin",
+       sub_element, elements);
+ 
+   return topbin;
+ }
+ 
+ static gboolean
+ _lookup_child (GESTimelineElement * object,
+diff --git a/subprojects/gst-editing-services/ges/ges-video-transition.c b/subprojects/gst-editing-services/ges/ges-video-transition.c
+index ba06a01..c2fcd16 100644
+--- a/subprojects/gst-editing-services/ges/ges-video-transition.c
++++ b/subprojects/gst-editing-services/ges/ges-video-transition.c
+@@ -11,147 +11,166 @@
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  * Library General Public License for more details.
+  *
+  * You should have received a copy of the GNU Library General Public
+  * License along with this library; if not, write to the
+  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+  * Boston, MA 02110-1301, USA.
+  */
+ 
+ /**
+  * SECTION:gesvideotransition
+  * @title: GESVideoTransition
+  * @short_description: implements video crossfade transition
+  */
+ #ifdef HAVE_CONFIG_H
+ #include "config.h"
+ #endif
+ 
+ #include <ges/ges.h>
+ #include "ges-internal.h"
+ #include "ges-smart-video-mixer.h"
+ 
+ #include <gst/controller/gstdirectcontrolbinding.h>
+ 
+ #define parent_class ges_video_transition_parent_class
+ 
+ static inline void
+ ges_video_transition_set_border_internal (GESVideoTransition * self,
+     guint border);
+ static inline void
+ ges_video_transition_set_inverted_internal (GESVideoTransition *
+     self, gboolean inverted);
+ static inline gboolean
+ ges_video_transition_set_transition_type_internal (GESVideoTransition
+     * self, GESVideoStandardTransitionType type);
+ struct _GESVideoTransitionPrivate
+ {
+   GESVideoStandardTransitionType type;
+ 
+   /* prevents cases where the transitions have not been created yet */
+   GESVideoStandardTransitionType pending_type;
+ 
+   /* these enable video interpolation */
+   GstTimedValueControlSource *fade_in_control_source;
+   GstTimedValueControlSource *fade_out_control_source;
+   GstTimedValueControlSource *smpte_control_source;
+ 
+   /* so we can support changing between wipes */
+   GstElement *smpte;
++  gboolean gl_fade;
++  gboolean gl_mode;
+ 
+   GstPad *mixer_sink;
+ 
+   GstElement *mixer;
+   GstPad *mixer_sinka;
+   GstPad *mixer_sinkb;
+ 
+   GstPad *mixer_ghosta;
+   GstPad *mixer_ghostb;
+ 
+   /* This is in case the smpte doesn't exist yet */
+   gint pending_border_value;
+   gboolean pending_inverted;
+ 
+   GstElement *positioner;
++
++  /* Output capsfilter pinned to the track's restriction-caps, so the
++   * internal mixer negotiates its output at the project size even when the
++   * sources are (smaller) preview proxies. Without this the internal mixer
++   * fixates at the sources' natural size, which the main mixer then draws
++   * in the top-left corner of the project canvas. Mirrors the track's own
++   * capsfilter (ges-track.c) and ges-audio-source.c's restriction_caps_cb. */
++  GstElement *capsfilter;
++  GESTrack *current_track;
+ };
+ 
+ enum
+ {
+   PROP_0,
+   PROP_BORDER,
+   PROP_TRANSITION_TYPE,
+   PROP_INVERT,
+   PROP_LAST
+ };
+ 
+ static GParamSpec *properties[PROP_LAST];
+ 
+ G_DEFINE_TYPE_WITH_PRIVATE (GESVideoTransition, ges_video_transition,
+     GES_TYPE_TRANSITION);
+ 
+ #define fast_element_link(a,b) gst_element_link_pads_full((a),"src",(b),"sink",GST_PAD_LINK_CHECK_NOTHING)
+ 
++static GstElement *create_gl_download_convert (const gchar * name);
++static void set_gl_blend_functions (GESVideoTransitionPrivate * priv,
++    gboolean is_fade);
+ static GObject *link_element_to_mixer_with_smpte (GstBin * bin,
+     GstElement * element, GstElement * mixer, gint type,
+     GstElement ** smpteref, GESVideoTransitionPrivate * priv, GstPad ** ghost);
+ 
+ static void
+ ges_video_transition_duration_changed (GESTrackElement * self,
+     guint64 duration);
+ 
+ static GstElement *ges_video_transition_create_element (GESTrackElement * self);
+ 
+ static void ges_video_transition_dispose (GObject * object);
+ 
+ static void ges_video_transition_finalize (GObject * object);
+ 
++static void restriction_caps_cb (GESTrack * track, GParamSpec * arg,
++    GESVideoTransition * self);
++static void transition_track_changed_cb (GESVideoTransition * self,
++    GParamSpec * arg, gpointer udata);
++
+ static void ges_video_transition_get_property (GObject * object, guint
+     property_id, GValue * value, GParamSpec * pspec);
+ 
+ static void ges_video_transition_set_property (GObject * object, guint
+     property_id, const GValue * value, GParamSpec * pspec);
+ 
+ static void
+ duration_changed_cb (GESTrackElement * self, GParamSpec * arg G_GNUC_UNUSED)
+ {
+   ges_video_transition_duration_changed (self,
+       ges_timeline_element_get_duration (GES_TIMELINE_ELEMENT (self)));
+ }
+ 
+ static gboolean
+ _set_priority (GESTimelineElement * element, guint32 priority)
+ {
+   gboolean res;
+   GESVideoTransition *self = GES_VIDEO_TRANSITION (element);
+ 
+   res = GES_TIMELINE_ELEMENT_CLASS (parent_class)->set_priority (element,
+       priority);
+ 
+   if (res && self->priv->positioner)
+     g_object_set (self->priv->positioner, "zorder", G_MAXUINT - priority, NULL);
+ 
+   return res;
+ }
+ 
+ static void
+ ges_video_transition_class_init (GESVideoTransitionClass * klass)
+ {
+   GObjectClass *object_class;
+   GESTrackElementClass *toclass;
+   GESTimelineElementClass *element_class = GES_TIMELINE_ELEMENT_CLASS (klass);
+   GESTrackElementClass *track_element_class = GES_TRACK_ELEMENT_CLASS (klass);
+ 
+   object_class = G_OBJECT_CLASS (klass);
+ 
+   object_class->get_property = ges_video_transition_get_property;
+   object_class->set_property = ges_video_transition_set_property;
+   object_class->dispose = ges_video_transition_dispose;
+   object_class->finalize = ges_video_transition_finalize;
+ 
+   track_element_class->ABI.abi.default_track_type = GES_TRACK_TYPE_VIDEO;
+ 
+   /**
+    * GESVideoTransition:border:
+    *
+    * This value represents the border width of the transition.
+    *
+@@ -166,457 +185,639 @@ ges_video_transition_class_init (GESVideoTransitionClass * klass)
+    * GESVideoTransition:type:
+    *
+    * The #GESVideoStandardTransitionType currently applied on the object
+    *
+    * Deprecated:1.20: Use ges_timeline_element_[sg]et_child_property instead.
+    */
+   properties[PROP_TRANSITION_TYPE] =
+       g_param_spec_enum ("transition-type", "Transition type",
+       "The type of the transition", GES_VIDEO_STANDARD_TRANSITION_TYPE_TYPE,
+       GES_VIDEO_STANDARD_TRANSITION_TYPE_CROSSFADE,
+       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+   g_object_class_install_property (object_class, PROP_TRANSITION_TYPE,
+       properties[PROP_TRANSITION_TYPE]);
+ 
+   /**
+    * GESVideoTransition:invert:
+    *
+    * This value represents the direction of the transition.
+    *
+     * Deprecated:1.20: Use ges_timeline_element_[sg]et_child_property instead.
+    */
+   properties[PROP_INVERT] =
+       g_param_spec_boolean ("invert", "Invert",
+       "Whether the transition is inverted", FALSE,
+       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+   g_object_class_install_property (object_class, PROP_INVERT,
+       properties[PROP_INVERT]);
+ 
+   toclass = GES_TRACK_ELEMENT_CLASS (klass);
+   toclass->create_element = ges_video_transition_create_element;
+ 
+   element_class->set_priority = _set_priority;
+ }
+ 
+ static void
+ ges_video_transition_init (GESVideoTransition * self)
+ {
+   self->priv = ges_video_transition_get_instance_private (self);
+ 
+   self->priv->fade_in_control_source = NULL;
+   self->priv->fade_out_control_source = NULL;
+   self->priv->smpte_control_source = NULL;
+   self->priv->smpte = NULL;
+   self->priv->mixer_sink = NULL;
+   self->priv->mixer = NULL;
+   self->priv->mixer_sinka = NULL;
+   self->priv->mixer_sinkb = NULL;
+   self->priv->pending_type = GES_VIDEO_STANDARD_TRANSITION_TYPE_NONE;
+   self->priv->pending_border_value = 0;
+   self->priv->pending_inverted = TRUE;
++
++  self->priv->positioner = NULL;
++  self->priv->capsfilter = NULL;
++  self->priv->current_track = NULL;
+ }
+ 
+ static void
+ ges_video_transition_release_mixer (GESVideoTransition * self)
+ {
+   GESVideoTransitionPrivate *priv = self->priv;
+ 
+   if (priv->mixer_ghosta && priv->mixer_ghostb) {
+     gst_element_release_request_pad (priv->mixer, priv->mixer_ghosta);
+     gst_element_release_request_pad (priv->mixer, priv->mixer_ghostb);
+     gst_clear_object (&priv->mixer_ghosta);
+     gst_clear_object (&priv->mixer_ghostb);
+   }
+ 
+   gst_clear_object (&priv->mixer_sinka);
+   gst_clear_object (&priv->mixer_sinkb);
+   gst_clear_object (&priv->mixer);
+ }
+ 
+ static void
+ ges_video_transition_dispose (GObject * object)
+ {
+   GESVideoTransition *self = GES_VIDEO_TRANSITION (object);
+   GESVideoTransitionPrivate *priv = self->priv;
+ 
+   GST_DEBUG ("disposing");
+ 
+   if (priv->fade_in_control_source) {
+     gst_object_unref (priv->fade_in_control_source);
+     priv->fade_in_control_source = NULL;
+   }
+ 
+   if (priv->fade_out_control_source) {
+     gst_object_unref (priv->fade_out_control_source);
+     priv->fade_out_control_source = NULL;
+   }
+ 
+   if (priv->smpte_control_source) {
+     gst_object_unref (priv->smpte_control_source);
+     priv->smpte_control_source = NULL;
+   }
+ 
+   ges_video_transition_release_mixer (self);
+ 
+   g_signal_handlers_disconnect_by_func (GES_TRACK_ELEMENT (self),
+       duration_changed_cb, NULL);
+ 
++  if (self->priv->current_track) {
++    g_signal_handlers_disconnect_by_func (self->priv->current_track,
++        (GCallback) restriction_caps_cb, self);
++    self->priv->current_track = NULL;
++  }
++
+   G_OBJECT_CLASS (ges_video_transition_parent_class)->dispose (object);
+ }
+ 
+ static void
+ ges_video_transition_finalize (GObject * object)
+ {
+   G_OBJECT_CLASS (ges_video_transition_parent_class)->finalize (object);
+ }
+ 
+ static void
+ ges_video_transition_get_property (GObject * object,
+     guint property_id, GValue * value, GParamSpec * pspec)
+ {
+   GESVideoTransition *tr = GES_VIDEO_TRANSITION (object);
+ 
+   switch (property_id) {
+     case PROP_BORDER:
+       g_value_set_uint (value, ges_video_transition_get_border (tr));
+       break;
+     case PROP_TRANSITION_TYPE:
+       g_value_set_enum (value, ges_video_transition_get_transition_type (tr));
+       break;
+     case PROP_INVERT:
+       g_value_set_boolean (value, ges_video_transition_is_inverted (tr));
+       break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+   }
+ }
+ 
+ static void
+ ges_video_transition_set_property (GObject * object,
+     guint property_id, const GValue * value, GParamSpec * pspec)
+ {
+   GESVideoTransition *tr = GES_VIDEO_TRANSITION (object);
+ 
+   switch (property_id) {
+     case PROP_BORDER:
+       ges_video_transition_set_border_internal (tr, g_value_get_uint (value));
+       break;
+     case PROP_TRANSITION_TYPE:
+       ges_video_transition_set_transition_type_internal (tr,
+           g_value_get_enum (value));
+       break;
+     case PROP_INVERT:
+       ges_video_transition_set_inverted_internal (tr,
+           g_value_get_boolean (value));
+       break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+   }
+ }
+ 
+ static GstTimedValueControlSource *
+ set_interpolation (GstObject * element, GESVideoTransitionPrivate * priv,
+     const gchar * propname)
+ {
+   GstControlSource *control_source;
+ 
+   g_object_set (element, propname, (gfloat) 0.0, NULL);
+ 
+   control_source = gst_interpolation_control_source_new ();
+   gst_object_add_control_binding (GST_OBJECT (element),
+       gst_direct_control_binding_new (GST_OBJECT (element), propname,
+           control_source));
+   g_object_set (control_source, "mode", GST_INTERPOLATION_MODE_LINEAR, NULL);
+ 
+   return GST_TIMED_VALUE_CONTROL_SOURCE (control_source);
+ }
+ 
++/* gldownload ! videoconvert wrapped in a bin, for the CPU-only wipes */
++static GstElement *
++create_gl_download_convert (const gchar * name)
++{
++  GstElement *bin = gst_bin_new (name);
++  GstElement *down = gst_element_factory_make ("gldownload", NULL);
++  GstElement *conv = gst_element_factory_make ("videoconvert", NULL);
++  GstPad *pad, *ghost;
++
++  gst_bin_add_many (GST_BIN (bin), down, conv, NULL);
++  fast_element_link (down, conv);
++
++  pad = gst_element_get_static_pad (down, "sink");
++  ghost = gst_ghost_pad_new ("sink", pad);
++  gst_element_add_pad (bin, ghost);
++  gst_object_unref (pad);
++
++  pad = gst_element_get_static_pad (conv, "src");
++  ghost = gst_ghost_pad_new ("src", pad);
++  gst_element_add_pad (bin, ghost);
++  gst_object_unref (pad);
++
++  return bin;
++}
++
++/* glvideomixer has no compositor-style "operator": emulate "source" (pad A,
++ * replaces what is below) and "add" (pad B, adds on top) with blend
++ * functions so a crossfade does not dip dark in the middle. */
++static void
++set_gl_blend_functions (GESVideoTransitionPrivate * priv, gboolean is_fade)
++{
++  GObject *a = G_OBJECT (priv->mixer_sinka);
++  GObject *b = G_OBJECT (priv->mixer_sinkb);
++
++  if (!g_object_class_find_property (G_OBJECT_GET_CLASS (a),
++          "blend-function-src-rgb")) {
++    GST_WARNING ("glvideomixer pad has no blend functions");
++    return;
++  }
++
++  gst_util_set_object_arg (a, "blend-function-src-rgb", "src-alpha");
++  gst_util_set_object_arg (a, "blend-function-src-alpha", "one");
++  gst_util_set_object_arg (b, "blend-function-src-rgb", "src-alpha");
++  gst_util_set_object_arg (b, "blend-function-src-alpha", "one");
++  if (is_fade) {
++    gst_util_set_object_arg (a, "blend-function-dst-rgb", "zero");
++    gst_util_set_object_arg (a, "blend-function-dst-alpha", "zero");
++    gst_util_set_object_arg (b, "blend-function-dst-rgb", "one");
++    gst_util_set_object_arg (b, "blend-function-dst-alpha", "one");
++  } else {
++    /* "over" */
++    gst_util_set_object_arg (a, "blend-function-dst-rgb",
++        "one-minus-src-alpha");
++    gst_util_set_object_arg (a, "blend-function-dst-alpha",
++        "one-minus-src-alpha");
++    gst_util_set_object_arg (b, "blend-function-dst-rgb",
++        "one-minus-src-alpha");
++    gst_util_set_object_arg (b, "blend-function-dst-alpha",
++        "one-minus-src-alpha");
++  }
++}
++
++static void
++restriction_caps_cb (GESTrack * track,
++    GParamSpec * arg G_GNUC_UNUSED, GESVideoTransition * self)
++{
++  GESVideoTransitionPrivate *priv = self->priv;
++  GstCaps *caps = NULL;
++
++  if (!priv->capsfilter)
++    return;
++
++  if (track)
++    g_object_get (track, "restriction-caps", &caps, NULL);
++
++  GST_DEBUG_OBJECT (self, "Setting transition output capsfilter caps to %"
++      GST_PTR_FORMAT, caps);
++  g_object_set (priv->capsfilter, "caps", caps, NULL);
++
++  if (caps)
++    gst_caps_unref (caps);
++}
++
++static void
++transition_track_changed_cb (GESVideoTransition * self,
++    GParamSpec * arg G_GNUC_UNUSED, gpointer udata G_GNUC_UNUSED)
++{
++  GESVideoTransitionPrivate *priv = self->priv;
++  GESTrack *track = ges_track_element_get_track (GES_TRACK_ELEMENT (self));
++
++  if (priv->current_track) {
++    g_signal_handlers_disconnect_by_func (priv->current_track,
++        (GCallback) restriction_caps_cb, self);
++  }
++
++  priv->current_track = track;
++
++  if (track) {
++    restriction_caps_cb (track, NULL, self);
++    g_signal_connect (track, "notify::restriction-caps",
++        G_CALLBACK (restriction_caps_cb), self);
++  }
++}
++
+ static GstElement *
+ ges_video_transition_create_element (GESTrackElement * object)
+ {
+   GstElement *topbin, *iconva, *iconvb;
+   GstElement *mixer = NULL;
++  gboolean gl_mode, gl_fade;
++  GESVideoStandardTransitionType initial_type;
+   GstPad *sinka_target, *sinkb_target, *src_target, *sinka, *sinkb, *src;
+   GESVideoTransition *self;
+   GESVideoTransitionPrivate *priv;
+   const gchar *smpte_properties[] = { "invert", "border", NULL };
+   gboolean is_fade;
+ 
+   self = GES_VIDEO_TRANSITION (object);
+   priv = self->priv;
+ 
+   is_fade = (priv->type == GES_VIDEO_STANDARD_TRANSITION_TYPE_CROSSFADE ||
+       priv->type == GES_VIDEO_STANDARD_TRANSITION_TYPE_FADE_IN);
+ 
+   GST_LOG ("creating a video bin");
+ 
+   topbin = gst_bin_new ("transition-bin");
+ 
+-  iconva = gst_element_factory_make ("videoconvert", "tr-csp-a");
+-  iconvb = gst_element_factory_make ("videoconvert", "tr-csp-b");
++  initial_type = priv->pending_type ? priv->pending_type : priv->type;
++  gl_mode = ges_track_element_is_gl (object);
++  priv->gl_mode = gl_mode;
++  gl_fade = gl_mode &&
++      (initial_type == GES_VIDEO_STANDARD_TRANSITION_TYPE_CROSSFADE ||
++      initial_type == GES_VIDEO_STANDARD_TRANSITION_TYPE_FADE_IN);
++  priv->gl_fade = gl_fade;
++
++  if (gl_fade) {
++    /* Pure fades are plain alpha blends done by glvideomixer: no CPU
++     * conversion nor smptealpha, frames never leave GL memory. */
++    iconva = gst_element_factory_make ("identity", "tr-csp-a");
++    iconvb = gst_element_factory_make ("identity", "tr-csp-b");
++  } else if (gl_mode) {
++    iconva = create_gl_download_convert ("tr-csp-a");
++    iconvb = create_gl_download_convert ("tr-csp-b");
++  } else {
++    iconva = gst_element_factory_make ("videoconvert", "tr-csp-a");
++    iconvb = gst_element_factory_make ("videoconvert", "tr-csp-b");
++  }
+   priv->positioner =
+       gst_element_factory_make ("framepositioner", "frame_tagger");
+   g_object_set (priv->positioner, "zorder",
+       G_MAXUINT - GES_TIMELINE_ELEMENT_PRIORITY (self), NULL);
+ 
+   gst_bin_add_many (GST_BIN (topbin), iconva, iconvb, priv->positioner, NULL);
+ 
+   mixer =
+       g_object_new (GES_TYPE_SMART_MIXER, "name",
+-      GES_TIMELINE_ELEMENT_NAME (object), NULL);
++      GES_TIMELINE_ELEMENT_NAME (object), "gl-mode", gl_mode, NULL);
+   GES_SMART_MIXER (mixer)->is_transition = TRUE;
+   gst_util_set_object_arg (G_OBJECT (GES_SMART_MIXER (mixer)->mixer),
+       "background", "transparent");
+   gst_bin_add (GST_BIN (topbin), mixer);
+ 
+   priv->mixer_sinka =
+       (GstPad *) link_element_to_mixer_with_smpte (GST_BIN (topbin), iconva,
+       mixer, GES_VIDEO_STANDARD_TRANSITION_TYPE_BAR_WIPE_LR, NULL, priv,
+       &priv->mixer_ghosta);
+   priv->mixer_sinkb =
+       (GstPad *) link_element_to_mixer_with_smpte (GST_BIN (topbin), iconvb,
+-      mixer, GES_VIDEO_STANDARD_TRANSITION_TYPE_BAR_WIPE_LR, &priv->smpte,
+-      priv, &priv->mixer_ghostb);
++      mixer, GES_VIDEO_STANDARD_TRANSITION_TYPE_BAR_WIPE_LR,
++      gl_fade ? NULL : &priv->smpte, priv, &priv->mixer_ghostb);
+   g_object_set (priv->mixer_sinka, "zorder", 0, NULL);
+   g_object_set (priv->mixer_sinkb, "zorder", 1, NULL);
+   gst_util_set_object_arg (G_OBJECT (priv->mixer_sinka), "operator",
+       is_fade ? "source" : "over");
+   gst_util_set_object_arg (G_OBJECT (priv->mixer_sinkb), "operator",
+       is_fade ? "add" : "over");
++  if (gl_mode)
++    set_gl_blend_functions (priv, is_fade);
+ 
+   fast_element_link (mixer, priv->positioner);
+ 
++  /* Pin the transition OUTPUT to the track restriction-caps (see
++   * restriction_caps_cb()): the internal mixer otherwise negotiates its
++   * output at the sources' natural size, which for a preview proxy is far
++   * below the project size - the main mixer then draws that small frame in
++   * the top-left corner of the project canvas on the first play. */
++  priv->capsfilter = gst_element_factory_make ("capsfilter", "tr-output-caps");
++  g_assert (priv->capsfilter);
++  gst_bin_add (GST_BIN (topbin), priv->capsfilter);
++  fast_element_link (priv->positioner, priv->capsfilter);
++
+   sinka_target = gst_element_get_static_pad (iconva, "sink");
+   sinkb_target = gst_element_get_static_pad (iconvb, "sink");
+-  src_target = gst_element_get_static_pad (priv->positioner, "src");
++  src_target = gst_element_get_static_pad (priv->capsfilter, "src");
+ 
+   sinka = gst_ghost_pad_new ("sinka", sinka_target);
+   sinkb = gst_ghost_pad_new ("sinkb", sinkb_target);
+   src = gst_ghost_pad_new ("src", src_target);
+ 
+   gst_element_add_pad (topbin, src);
+   gst_element_add_pad (topbin, sinka);
+   gst_element_add_pad (topbin, sinkb);
+ 
+   gst_object_unref (sinka_target);
+   gst_object_unref (sinkb_target);
+   gst_object_unref (src_target);
+ 
+   /* set up interpolation */
+ 
+   priv->fade_out_control_source =
+       set_interpolation (GST_OBJECT (priv->mixer_ghosta), priv, "alpha");
+   priv->fade_in_control_source =
+       set_interpolation (GST_OBJECT (priv->mixer_ghostb), priv, "alpha");
+-  priv->smpte_control_source =
+-      set_interpolation (GST_OBJECT (priv->smpte), priv, "position");
++  if (priv->smpte)
++    priv->smpte_control_source =
++        set_interpolation (GST_OBJECT (priv->smpte), priv, "position");
+   priv->mixer = gst_object_ref (mixer);
+ 
+   if (priv->pending_type)
+     ges_video_transition_set_transition_type_internal (self,
+         priv->pending_type);
+   else
+     ges_video_transition_set_transition_type_internal (self, priv->type);
+ 
+   ges_video_transition_duration_changed (object,
+       ges_timeline_element_get_duration (GES_TIMELINE_ELEMENT (object)));
+ 
+   g_signal_connect (object, "notify::duration",
+       G_CALLBACK (duration_changed_cb), NULL);
+ 
++  g_signal_connect (object, "notify::track",
++      G_CALLBACK (transition_track_changed_cb), NULL);
++  transition_track_changed_cb (self, NULL, NULL);
++
+   priv->pending_type = GES_VIDEO_STANDARD_TRANSITION_TYPE_NONE;
+ 
+-  ges_track_element_add_children_props (GES_TRACK_ELEMENT (self),
+-      priv->smpte, NULL, NULL, smpte_properties);
++  if (priv->smpte)
++    ges_track_element_add_children_props (GES_TRACK_ELEMENT (self),
++        priv->smpte, NULL, NULL, smpte_properties);
+ 
+   return topbin;
+ }
+ 
+ static GObject *
+ link_element_to_mixer_with_smpte (GstBin * bin, GstElement * element,
+     GstElement * mixer, gint type, GstElement ** smpteref,
+     GESVideoTransitionPrivate * priv, GstPad ** ghost)
+ {
+   GstPad *srcpad, *mixerpad;
+-  GstElement *smptealpha = gst_element_factory_make ("smptealpha", NULL);
++  GstElement *smptealpha;
++  GstElement *last;
+ 
+-  g_object_set (G_OBJECT (smptealpha),
+-      "type", (gint) type, "invert", (gboolean) priv->pending_inverted,
+-      "border", priv->pending_border_value, NULL);
+-  gst_bin_add (bin, smptealpha);
+-
+-  fast_element_link (element, smptealpha);
+-
+-  /* crack */
+-  if (smpteref) {
+-    *smpteref = smptealpha;
++  if (priv->gl_fade) {
++    /* GL fade: nothing between the (identity) input and the mixer. */
++    last = element;
++  } else {
++    smptealpha = gst_element_factory_make ("smptealpha", NULL);
++    g_object_set (G_OBJECT (smptealpha),
++        "type", (gint) type, "invert", (gboolean) priv->pending_inverted,
++        "border", priv->pending_border_value, NULL);
++    gst_bin_add (bin, smptealpha);
++
++    fast_element_link (element, smptealpha);
++
++    /* crack */
++    if (smpteref) {
++      *smpteref = smptealpha;
++    }
++    last = smptealpha;
++
++    if (priv->gl_mode) {
++      /* wipes still run smptealpha on the CPU, bring the result back */
++      GstElement *upload = gst_element_factory_make ("glupload", NULL);
++
++      gst_bin_add (bin, upload);
++      fast_element_link (smptealpha, upload);
++      last = upload;
++    }
+   }
+ 
+-  srcpad = gst_element_get_static_pad (smptealpha, "src");
++  srcpad = gst_element_get_static_pad (last, "src");
+   *ghost = ges_smart_mixer_get_mixer_pad (GES_SMART_MIXER (mixer), &mixerpad);
+   gst_pad_link_full (srcpad, *ghost, GST_PAD_LINK_CHECK_NOTHING);
+   gst_object_unref (srcpad);
+ 
+   return G_OBJECT (mixerpad);
+ }
+ 
+ static void
+ ges_video_transition_update_control_source (GstTimedValueControlSource * ts,
+     guint64 duration, gdouble start_value, gdouble end_value)
+ {
+   gst_timed_value_control_source_unset_all (ts);
+   gst_timed_value_control_source_set (ts, 0, start_value);
+   gst_timed_value_control_source_set (ts, duration, end_value);
+ }
+ 
+ static void
+ ges_video_transition_update_control_sources (GESVideoTransition * self,
+     GESVideoStandardTransitionType type)
+ {
+   GESVideoTransitionPrivate *priv = self->priv;
+   guint64 duration =
+       ges_timeline_element_get_duration (GES_TIMELINE_ELEMENT (self));
+ 
+   GST_LOG ("updating controller");
+   if (type == GES_VIDEO_STANDARD_TRANSITION_TYPE_CROSSFADE) {
+     ges_video_transition_update_control_source
+         (priv->fade_in_control_source, duration, 0.0, 1.0);
+     ges_video_transition_update_control_source
+         (priv->fade_out_control_source, duration, 1.0, 0.0);
+-    ges_video_transition_update_control_source (priv->smpte_control_source,
+-        duration, 0.0, 0.0);
++    if (priv->smpte_control_source)
++      ges_video_transition_update_control_source (priv->smpte_control_source,
++          duration, 0.0, 0.0);
+   } else if (type == GES_VIDEO_STANDARD_TRANSITION_TYPE_FADE_IN) {
+     ges_video_transition_update_control_source
+         (priv->fade_in_control_source, duration, 0.0, 1.0);
+     ges_video_transition_update_control_source
+         (priv->fade_out_control_source, duration, 1.0, 1.0);
+-    ges_video_transition_update_control_source (priv->smpte_control_source,
+-        duration, 0.0, 0.0);
++    if (priv->smpte_control_source)
++      ges_video_transition_update_control_source (priv->smpte_control_source,
++          duration, 0.0, 0.0);
+   } else {
+     ges_video_transition_update_control_source
+         (priv->fade_in_control_source, duration, 1.0, 1.0);
+     ges_video_transition_update_control_source
+         (priv->fade_out_control_source, duration, 1.0, 1.0);
+-    ges_video_transition_update_control_source (priv->smpte_control_source,
+-        duration, 1.0, 0.0);
++    if (priv->smpte_control_source)
++      ges_video_transition_update_control_source (priv->smpte_control_source,
++          duration, 1.0, 0.0);
+   }
+   GST_LOG ("done updating controller");
+ }
+ 
+ static void
+ ges_video_transition_duration_changed (GESTrackElement * object,
+     guint64 duration)
+ {
+   GESVideoTransition *self = GES_VIDEO_TRANSITION (object);
+ 
+   ges_video_transition_update_control_sources (self, self->priv->type);
+ }
+ 
+ static inline void
+ ges_video_transition_set_border_internal (GESVideoTransition * self,
+     guint value)
+ {
+   GESVideoTransitionPrivate *priv = self->priv;
+ 
+   if (!priv->smpte) {
+     priv->pending_border_value = value;
+     return;
+   }
+   g_object_set (priv->smpte, "border", value, NULL);
+ }
+ 
+ static inline void
+ ges_video_transition_set_inverted_internal (GESVideoTransition *
+     self, gboolean inverted)
+ {
+   GESVideoTransitionPrivate *priv = self->priv;
+ 
+   if (!priv->smpte) {
+     priv->pending_inverted = !inverted;
+     return;
+   }
+   g_object_set (priv->smpte, "invert", !inverted, NULL);
+ }
+ 
+ static inline gboolean
+ ges_video_transition_set_transition_type_internal (GESVideoTransition
+     * self, GESVideoStandardTransitionType type)
+ {
+   GESVideoTransitionPrivate *priv = self->priv;
+   gboolean is_fade;
+ 
+   GST_DEBUG ("%p %d => %d", self, priv->type, type);
+ 
+   if (!priv->mixer) {
+     priv->pending_type = type;
+     return TRUE;
+   }
+ 
+   if (type == priv->type) {
+     GST_DEBUG ("%d type is already set on this transition\n", type);
+     return TRUE;
+   }
+ 
++  if (priv->gl_fade &&
++      type != GES_VIDEO_STANDARD_TRANSITION_TYPE_CROSSFADE &&
++      type != GES_VIDEO_STANDARD_TRANSITION_TYPE_FADE_IN) {
++    GST_WARNING_OBJECT (self, "GL mode: a fade transition cannot be turned "
++        "into a wipe without recreating it");
++    return FALSE;
++  }
++
+   ges_video_transition_update_control_sources (self, type);
+ 
+   priv->type = type;
+   is_fade = (type == GES_VIDEO_STANDARD_TRANSITION_TYPE_CROSSFADE ||
+       type == GES_VIDEO_STANDARD_TRANSITION_TYPE_FADE_IN);
+ 
+-  if (!is_fade) {
++  if (!is_fade && priv->smpte) {
+     g_object_set (priv->smpte, "type", (gint) type, NULL);
+   }
+ 
+   gst_util_set_object_arg (G_OBJECT (priv->mixer_sinka), "operator",
+       is_fade ? "source" : "over");
+   gst_util_set_object_arg (G_OBJECT (priv->mixer_sinkb), "operator",
+       is_fade ? "add" : "over");
++  if (priv->gl_mode)
++    set_gl_blend_functions (priv, is_fade);
+ 
+   return TRUE;
+ }
+ 
+ /**
+  * ges_video_transition_set_border:
+  * @self: The #GESVideoTransition to set the border to
+  * @value: The value of the border to set on @object
+  *
+  * Set the border property of @self, this value represents
+  * the border width of the transition. In case this value does
+  * not make sense for the current transition type, it is cached
+  * for later use.
+  *
+  * Deprecated:1.20: Use ges_timeline_element_set_child_property instead.
+  */
+ void
+ ges_video_transition_set_border (GESVideoTransition * self, guint value)
+ {
+   ges_video_transition_set_border_internal (self, value);
+ 
+   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_BORDER]);
+ }
+ 
+ /**
+  * ges_video_transition_get_border:
+  * @self: The #GESVideoTransition to get the border from
+  *
+  * Get the border property of @self, this value represents
+  * the border width of the transition.
+  *
+  * Returns: The border values of @self or -1 if not meaningful
+  * (this will happen when not using a smpte transition).
+  *
+  * Deprecated:1.20: Use ges_timeline_element_get_child_property instead.
+  */
+ gint
+ ges_video_transition_get_border (GESVideoTransition * self)
+ {
+   gint value;
+ 
+   if (!self->priv->smpte) {
+     return -1;
+   }
+ 
+   g_object_get (self->priv->smpte, "border", &value, NULL);
+ 
+   return value;
+ }
+ 
