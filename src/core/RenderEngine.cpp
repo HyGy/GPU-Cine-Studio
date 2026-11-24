@@ -9,6 +9,7 @@
 #include <QDebug>
 #include <QFileInfo>
 #include <QThread>
+#include <QElapsedTimer>
 #include <gst/gst.h>
 #include <gst/pbutils/encoding-profile.h>
 #include <algorithm>
@@ -217,6 +218,78 @@ void setEncoderProp(GstStructure *props, const QString &element,
     }
     g_value_unset(&v);
     gst_object_unref(probe);
+}
+
+// --- AV1 tier probe ---------------------------------------------------------
+// av1parse first pushes caps with tier=main (before it has seen a sequence
+// header) and, once the first frame is parsed, re-negotiates to the tier the
+// ENCODER actually picked (NVENC picks tier=high at >=20 Mbps for 4K). Both
+// mp4mux ("refused renegotiation") and encodebin's capsfilter reject that
+// change, so the render died with "Internal data stream error" / not-negotiated.
+// The tier cannot be queried from the encoder, so a tiny synchronous encode of
+// a few frames with the SAME encoder properties reveals it; the result is then
+// pinned in the profile's caps. Returns an empty string when the probe fails
+// (caller falls back to unpinned caps).
+QString probeAv1Tier(const QString &encoderElement, const GstStructure *props,
+                     const QString &pixelFormat, int width, int height,
+                     int fpsNum, int fpsDen)
+{
+    QString tier;
+    GstElement *pipe = gst_pipeline_new("av1-tier-probe");
+    GstElement *src = gst_element_factory_make("videotestsrc", nullptr);
+    GstElement *cf = gst_element_factory_make("capsfilter", nullptr);
+    GstElement *enc = gst_element_factory_make(encoderElement.toUtf8().constData(), nullptr);
+    GstElement *parse = gst_element_factory_make("av1parse", nullptr);
+    GstElement *sink = gst_element_factory_make("fakesink", nullptr);
+    if (!pipe || !src || !cf || !enc || !parse || !sink) {
+        for (GstElement *e : { src, cf, enc, parse, sink }) {
+            if (e) { gst_object_ref_sink(e); gst_object_unref(e); }
+        }
+        if (pipe) gst_object_unref(pipe);
+        return tier;
+    }
+
+    // Same element properties the render applies (typed per property already).
+    if (props) {
+        gst_structure_foreach(props, [](GQuark f, const GValue *v, gpointer ud) -> gboolean {
+            g_object_set_property(G_OBJECT(ud), g_quark_to_string(f), v);
+            return TRUE;
+        }, enc);
+    }
+
+    GstCaps *raw = gst_caps_new_simple("video/x-raw",
+        "format", G_TYPE_STRING, pixelFormat.toUtf8().constData(),
+        "width", G_TYPE_INT, width, "height", G_TYPE_INT, height,
+        "framerate", GST_TYPE_FRACTION, fpsNum, fpsDen, nullptr);
+    g_object_set(cf, "caps", raw, nullptr);
+    gst_caps_unref(raw);
+    g_object_set(src, "num-buffers", 8, nullptr);
+    g_object_set(sink, "sync", FALSE, nullptr);
+
+    gst_bin_add_many(GST_BIN(pipe), src, cf, enc, parse, sink, nullptr);
+    if (gst_element_link_many(src, cf, enc, parse, sink, nullptr)
+            && gst_element_set_state(pipe, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE) {
+        GstBus *bus = gst_element_get_bus(pipe);
+        GstMessage *msg = gst_bus_timed_pop_filtered(bus, 8 * GST_SECOND,
+            GstMessageType(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
+        if (msg && GST_MESSAGE_TYPE(msg) == GST_MESSAGE_EOS) {
+            GstPad *pad = gst_element_get_static_pad(parse, "src");
+            GstCaps *cur = pad ? gst_pad_get_current_caps(pad) : nullptr;
+            if (cur && gst_caps_get_size(cur) > 0) {
+                const gchar *t = gst_structure_get_string(gst_caps_get_structure(cur, 0), "tier");
+                if (t) tier = QString::fromUtf8(t);
+            }
+            if (cur) gst_caps_unref(cur);
+            if (pad) gst_object_unref(pad);
+        } else {
+            qWarning() << "Render: AV1 tier probe failed or timed out";
+        }
+        if (msg) gst_message_unref(msg);
+        gst_object_unref(bus);
+    }
+    gst_element_set_state(pipe, GST_STATE_NULL);
+    gst_object_unref(pipe);
+    return tier;
 }
 
 } // namespace
@@ -702,6 +775,22 @@ bool RenderJob::start()
                 setEncoderProp(props, encoderElement, "logical-processors", "0"); // svtav1: auto
                 setEncoderProp(props, encoderElement, "row-mt", "true");
                 setEncoderProp(props, encoderElement, "cpu-used", "4");
+            }
+        }
+        // NVENC AV1: pin the tier the encoder will really produce (see
+        // probeAv1Tier). Software/VA AV1 encoders are not probed.
+        if (codec == CodecFamily::AV1 && backend == "nvidia"
+                && encoderElement.contains(QLatin1String("av1enc"))) {
+            QElapsedTimer probeTimer; probeTimer.start();
+            const QString tier = probeAv1Tier(encoderElement, props, pixelFormat,
+                                              width, height, fpsNum, fpsDen);
+            qDebug() << "Render: AV1 tier probe ->" << (tier.isEmpty() ? "none" : tier)
+                     << "in" << probeTimer.elapsed() << "ms";
+            if (!tier.isEmpty()) {
+                GstCaps *pinned = gst_caps_from_string(codecCaps(codec));
+                gst_caps_set_simple(pinned, "tier", G_TYPE_STRING, tier.toUtf8().constData(), nullptr);
+                gst_encoding_profile_set_format(GST_ENCODING_PROFILE(videoProfile), pinned);
+                gst_caps_unref(pinned);
             }
         }
         gst_encoding_profile_set_element_properties(GST_ENCODING_PROFILE(videoProfile), props);
