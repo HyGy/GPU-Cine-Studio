@@ -220,6 +220,155 @@ void setEncoderProp(GstStructure *props, const QString &element,
     gst_object_unref(probe);
 }
 
+// --- Quality / speed options -------------------------------------------------
+// One table per encoder family; ids are stable strings stored in the project
+// file, labels/descriptions are UI text (see qualityOptions()). Measurements
+// behind the choices: 4K footage, 20 Mbps, RTX 4070 laptop NVENC - without
+// B-frames the preset barely changes quality, B-frames + look-ahead are the
+// real quality lever and P5 is about 1.7x as fast as P7 (P7 = the slowest
+// NVIDIA preset; at 20 Mbps it was not measurably sharper than P5).
+enum class QualityFamily { None, Nvenc, Vaapi, X26x, Vp9 };
+
+struct QualityOption {
+    const char *id;
+    const char *label;
+    const char *shortLabel;
+    const char *description;
+    bool isDefault;
+};
+
+QualityFamily qualityFamilyFor(const QString &enc)
+{
+    if (enc.startsWith(QLatin1String("nv")) && enc.endsWith(QLatin1String("enc"))
+            && enc != QLatin1String("nvjpegenc"))
+        return QualityFamily::Nvenc;
+    if (enc.startsWith(QLatin1String("va")) && enc.endsWith(QLatin1String("enc")))
+        return QualityFamily::Vaapi;
+    if (enc == QLatin1String("x264enc") || enc == QLatin1String("x265enc"))
+        return QualityFamily::X26x;
+    if (enc == QLatin1String("vp9enc")) return QualityFamily::Vp9;
+    return QualityFamily::None;
+}
+
+QString qualityFamilyKey(QualityFamily f)
+{
+    switch (f) {
+    case QualityFamily::Nvenc: return QStringLiteral("nvenc");
+    case QualityFamily::Vaapi: return QStringLiteral("vaapi");
+    case QualityFamily::X26x:  return QStringLiteral("x26x");
+    case QualityFamily::Vp9:   return QStringLiteral("vp9");
+    default:                   return QString();
+    }
+}
+
+const QVector<QualityOption> &qualityOptionsFor(QualityFamily f)
+{
+    static const QVector<QualityOption> none;
+    // All but "fastest" use B-frames + look-ahead; H.265 also uses two-pass
+    // rate control in Balanced/High/Maximum (see applyQualityProps()).
+    static const QVector<QualityOption> nvenc = {
+        {"fastest", "Fastest", "P1",
+         "Fastest encoding. Fine detail is slightly softer than \"High quality\" at the same bitrate. Good for drafts and previews.", false},
+        {"balanced", "Balanced", "P4",
+         "Almost the same quality as \"High quality\", a little faster. A good everyday choice.", false},
+        {"high", "High quality (recommended)", "P5",
+         "Best quality per bitrate in our tests. Uses B-frames and look-ahead; renders noticeably faster than the slowest setting.", true},
+        {"maximum", "Maximum (P7, slowest)", "P7",
+         "NVIDIA's most thorough preset, with B-frames and look-ahead. Takes the longest. In our tests at 20 Mbps it was not visibly sharper than \"High quality\".", false},
+    };
+    static const QVector<QualityOption> vaapi = {
+        {"fastest", "Fastest", "TU7",
+         "Asks the GPU driver for its fastest mode. Lowest quality at the same bitrate; use for drafts.", false},
+        {"balanced", "Balanced (default)", "TU4",
+         "The driver's standard trade-off between speed and quality.", true},
+        {"quality", "Best quality", "TU1",
+         "Asks the driver for its most thorough mode. Slowest; on many Intel GPUs the difference is small.", false},
+    };
+    static const QVector<QualityOption> x26x = {
+        {"ultrafast", "Fastest", "ultrafast",
+         "Much faster (about 4x), but clearly lower quality at the same bitrate. Drafts only.", false},
+        {"veryfast", "Fast", "veryfast",
+         "Noticeably faster than Medium (about 2x), with somewhat lower quality.", false},
+        {"medium", "Medium (default)", "medium",
+         "Standard x264/x265 trade-off.", true},
+        {"slow", "Slow", "slow",
+         "Slightly better quality at the same bitrate, takes noticeably longer.", false},
+    };
+    static const QVector<QualityOption> vp9 = {
+        {"default", "Standard (default)", "cpu-used 4",
+         "Standard VP9 speed. VP9 software encoding is slow at 4K.", true},
+        {"quality", "Better quality (slower)", "cpu-used 2",
+         "Slightly better quality, about twice as slow.", false},
+    };
+    switch (f) {
+    case QualityFamily::Nvenc: return nvenc;
+    case QualityFamily::Vaapi: return vaapi;
+    case QualityFamily::X26x:  return x26x;
+    case QualityFamily::Vp9:   return vp9;
+    default:                   return none;
+    }
+}
+
+// Resolves an id (unknown/empty -> the family's default).
+QString resolveQualityId(QualityFamily f, const QString &id)
+{
+    const QVector<QualityOption> &opts = qualityOptionsFor(f);
+    QString def;
+    for (const QualityOption &o : opts) {
+        if (id == QLatin1String(o.id)) return id;
+        if (o.isDefault) def = QString::fromLatin1(o.id);
+    }
+    return def;
+}
+
+// Adds the speed/quality dependent encoder properties to `props`.
+void applyQualityProps(GstStructure *props, const QString &enc, CodecFamily codec,
+                       const QString &qualityId)
+{
+    const QualityFamily fam = qualityFamilyFor(enc);
+    const QString id = resolveQualityId(fam, qualityId);
+    switch (fam) {
+    case QualityFamily::Nvenc: {
+        const char *preset = "p5";
+        bool bframes = true, lookahead = true;
+        if (id == QLatin1String("fastest"))       { preset = "p1"; lookahead = false; }
+        else if (id == QLatin1String("balanced")) { preset = "p4"; }
+        else if (id == QLatin1String("maximum"))  { preset = "p7"; }
+        setEncoderProp(props, enc, "preset", preset);
+        // Baseline H.264 has no B-frames.
+        if (bframes && !(codec == CodecFamily::H264 && !encoderSupportsH264High(enc)))
+            setEncoderProp(props, enc, "bframes", "3");
+        if (lookahead) {
+            setEncoderProp(props, enc, "rc-lookahead", "16");
+            setEncoderProp(props, enc, "b-adapt", "true");
+        }
+        // Quarter-resolution two-pass rate control: +0.2..0.4 dB on hard moving
+        // 4K footage for ~8% speed, nothing on static footage. Measured H.265
+        // only; it did NOT help H.264 (-0.3 dB) or AV1 (-0.1 dB), so skip those.
+        // "full" two-pass is slower and not better than "quarter".
+        if (codec == CodecFamily::H265 && (id == QLatin1String("balanced")
+                || id == QLatin1String("high") || id == QLatin1String("maximum")))
+            setEncoderProp(props, enc, "multi-pass", "two-pass-quarter");
+        break;
+    }
+    case QualityFamily::Vaapi:
+        if (id == QLatin1String("fastest")) setEncoderProp(props, enc, "target-usage", "7");
+        else if (id == QLatin1String("quality")) setEncoderProp(props, enc, "target-usage", "1");
+        break;
+    case QualityFamily::X26x:
+        setEncoderProp(props, enc, "speed-preset", id);
+        break;
+    case QualityFamily::Vp9:
+        setEncoderProp(props, enc, "cpu-used", id == QLatin1String("quality") ? "2" : "4");
+        break;
+    default:
+        break;
+    }
+    gchar *dump = gst_structure_to_string(props);
+    qDebug() << "Render: quality" << id << "for" << enc << "->" << dump;
+    g_free(dump);
+}
+
 // --- AV1 tier probe ---------------------------------------------------------
 // av1parse first pushes caps with tier=main (before it has seen a sequence
 // header) and, once the first frame is parsed, re-negotiates to the tier the
@@ -383,6 +532,9 @@ bool RenderJob::start()
     const int bitrateMbps = m_settings.value("bitrate", 50).toInt();
     const QString backend = m_backendKey;
     const CodecFamily codec = parseCodec(codecStr);
+    // Speed/quality option id (per project, chosen in the render settings);
+    // absent/unknown -> the encoder family's default.
+    const QString qualityId = m_settings.value("quality").toString();
 
     int width = 0, height = 0, fpsNum = 30, fpsDen = 1;
     {
@@ -746,16 +898,17 @@ bool RenderJob::start()
         }
 
         if (backend == "nvidia") {
-            setEncoderProp(props, encoderElement, "preset", "p7");      // best quality
-            setEncoderProp(props, encoderElement, "rate-control", "vbr");
+            setEncoderProp(props, encoderElement, "rc-mode", "vbr");
             setEncoderProp(props, encoderElement, "gop-size", "60");
             setEncoderProp(props, encoderElement, "max-bitrate", kbpsStr);
+            applyQualityProps(props, encoderElement, codec, qualityId);
         } else if (backend == "vaapi") {
             setEncoderProp(props, encoderElement, "rate-control", "vbr");
             // VA VBR interprets "bitrate" as the MAXIMUM and targets
             // target-percentage of it; without this it aims at 66%.
             setEncoderProp(props, encoderElement, "target-percentage", "95");
             setEncoderProp(props, encoderElement, "key-int-max", "60");
+            applyQualityProps(props, encoderElement, codec, qualityId);
         } else {
             // --- software encoders ------------------------------------------
             // Measured on this machine (22 logical cores, 4K HEVC source):
@@ -767,14 +920,17 @@ bool RenderJob::start()
             // vp9enc is the one that is NOT parallel by default: threads=8,
             // row-mt=false. av1enc/svtav1enc default to auto but not row-mt.
             const int cores = qMax(1, QThread::idealThreadCount());
-            setEncoderProp(props, encoderElement, "key-int-max", "60");
-            if (codec == CodecFamily::H264 || codec == CodecFamily::H265) {
-                setEncoderProp(props, encoderElement, "speed-preset", "medium");
-            } else {
+            // vp9enc calls the GOP length "keyframe-max-dist" (key-int-max
+            // does not exist there and used to be silently skipped).
+            setEncoderProp(props, encoderElement,
+                           encoderElement == "vp9enc" ? "keyframe-max-dist" : "key-int-max", "60");
+            applyQualityProps(props, encoderElement, codec, qualityId);   // x264/x265 speed-preset, vp9 cpu-used
+            if (codec != CodecFamily::H264 && codec != CodecFamily::H265) {
                 setEncoderProp(props, encoderElement, "threads", QString::number(cores));
                 setEncoderProp(props, encoderElement, "logical-processors", "0"); // svtav1: auto
                 setEncoderProp(props, encoderElement, "row-mt", "true");
-                setEncoderProp(props, encoderElement, "cpu-used", "4");
+                if (encoderElement != "vp9enc")
+                    setEncoderProp(props, encoderElement, "cpu-used", "4");
             }
         }
         // NVENC AV1: pin the tier the encoder will really produce (see
@@ -990,6 +1146,30 @@ int RenderEngine::queuedJobCount() const
     int n = 0;
     for (const RenderJob *j : m_jobs) if (j->state() == RenderJob::Queued) ++n;
     return n;
+}
+
+QVariantMap RenderEngine::qualityOptions(const QString &backend, const QString &codec) const
+{
+    QVariantMap out;
+    const QString enc = selectEncoderElement(backend, parseCodec(codec), nullptr);
+    const QualityFamily fam = qualityFamilyFor(enc);
+    QVariantList list;
+    QString defaultId;
+    for (const QualityOption &o : qualityOptionsFor(fam)) {
+        QVariantMap m;
+        m["id"] = QString::fromLatin1(o.id);
+        m["label"] = QString::fromUtf8(o.label);
+        m["shortLabel"] = QString::fromUtf8(o.shortLabel);
+        m["description"] = QString::fromUtf8(o.description);
+        m["isDefault"] = o.isDefault;
+        if (o.isDefault) defaultId = QString::fromLatin1(o.id);
+        list.append(m);
+    }
+    out["family"] = qualityFamilyKey(fam);
+    out["encoder"] = enc;
+    out["options"] = list;
+    out["defaultId"] = defaultId;
+    return out;
 }
 
 bool RenderEngine::outputPathExists(const QString &outputPath) const

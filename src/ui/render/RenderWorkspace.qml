@@ -13,6 +13,7 @@ Item {
         // Bal oldal - Settings
        RenderSettings {
             id: settingsPanel
+            objectName: "renderSettingsPanel"
             SplitView.minimumWidth: 400
             SplitView.preferredWidth: 450
             SplitView.fillHeight: true

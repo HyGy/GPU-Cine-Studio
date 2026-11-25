@@ -710,6 +710,16 @@ ApplicationWindow {
     }
     function autosavePathFor(projectPath) { return projectPath + ".autosave" }
 
+    readonly property var renderQualityFamilies: ["nvenc", "vaapi", "x26x", "vp9"]
+    function renderQualityForSave() {
+        var out = {}
+        for (var i = 0; i < renderQualityFamilies.length; i++) {
+            var v = String(Backend.getSetting("project/renderQuality/" + renderQualityFamilies[i], ""))
+            if (v !== "") out[renderQualityFamilies[i]] = v
+        }
+        return out
+    }
+
     // Comparison key: the project JSON with the fields that change on every
     // call (lastSaved, currentWorkspace) removed, so an untouched project
     // does not look "changed" just because time passed.
@@ -963,6 +973,9 @@ ApplicationWindow {
                     anchorH: Backend.getSetting("project/fitAnchorH", "center"),
                     anchorV: Backend.getSetting("project/fitAnchorV", "center")
                 },
+                // Render "Quality / speed" choice per encoder family (only
+                // explicit choices; a missing entry = that family's default).
+                renderQuality: renderQualityForSave(),
                 lastSaved: new Date().toISOString(),
                 currentWorkspace: currentWorkspace
             },
@@ -1342,6 +1355,8 @@ ApplicationWindow {
         // Newly added clips are cropped to fill the frame by default (existing
         // clips keep the importer's own transforms).
         Backend.setSetting("project/fitScaling", "fill")
+        for (var rqi = 0; rqi < renderQualityFamilies.length; rqi++)
+            Backend.setSetting("project/renderQuality/" + renderQualityFamilies[rqi], "")
         Backend.setSetting("project/fitAnchorH", "center")
         Backend.setSetting("project/fitAnchorV", "center")
         Backend.setSetting("project/proxyEnabled", Backend.getSetting("proxy/defaultEnabled", false))
@@ -1487,6 +1502,15 @@ ApplicationWindow {
                 Backend.setSetting("project/fitScaling", fitSettings.scaling || "fit")
                 Backend.setSetting("project/fitAnchorH", fitSettings.anchorH || "center")
                 Backend.setSetting("project/fitAnchorV", fitSettings.anchorV || "center")
+
+                // Render quality/speed choices; older files have no
+                // renderQuality key -> every family keeps its default.
+                var rq = settings.renderQuality || {}
+                for (var qi = 0; qi < renderQualityFamilies.length; qi++) {
+                    var qf = renderQualityFamilies[qi]
+                    Backend.setSetting("project/renderQuality/" + qf,
+                        typeof rq[qf] === "string" ? rq[qf] : "")
+                }
 
                 var proxySettings = settings.proxy || {}
                 Backend.setSetting("project/proxyEnabled",

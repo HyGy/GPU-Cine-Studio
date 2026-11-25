@@ -1524,6 +1524,15 @@ Window {
             Backend.cacheManager.cancelPendingProxyGeneration("proxy-disabled")
         }
 
+        // A brand-new project starts with every render quality/speed
+        // family at its default (project/* is process-wide state that
+        // would otherwise carry over from the previously open project).
+        if (isNewProject) {
+            var rqFamilies = ["nvenc", "vaapi", "x26x", "vp9"]
+            for (var rqi = 0; rqi < rqFamilies.length; rqi++)
+                Backend.setSetting("project/renderQuality/" + rqFamilies[rqi], "")
+        }
+
         // Save project info
         Backend.setSetting("project/fileName", fileNameField.text)
         Backend.setSetting("project/location", effectiveLocation)

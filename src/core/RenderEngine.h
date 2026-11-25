@@ -135,6 +135,12 @@ public:
     // calls this before startRender() to ask for confirmation first.
     Q_INVOKABLE bool outputPathExists(const QString &outputPath) const;
 
+    // Speed/quality choices for the encoder element that a render on
+    // `backend` ("nvidia"|"vaapi"|"cpu") with `codec` would really use:
+    // {family, encoder, options:[{id,label,shortLabel,description,isDefault}],
+    //  defaultId}. options is empty when the encoder has no such setting.
+    Q_INVOKABLE QVariantMap qualityOptions(const QString &backend, const QString &codec) const;
+
     bool isRendering() const;
     int activeJobCount() const;
     int queuedJobCount() const;

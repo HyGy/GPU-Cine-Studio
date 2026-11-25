@@ -33,6 +33,59 @@ Rectangle {
         }
     }
 
+    function backendKey() {
+        if (selectedGStreamerEncoderId.indexOf("nvidia") !== -1) return "nvidia"
+        if (selectedGStreamerEncoderId.indexOf("vaapi") !== -1) return "vaapi"
+        return "cpu"
+    }
+
+    // ---- Quality / speed (per project, per encoder family) ----------------
+    // The option list comes from RenderEngine::qualityOptions() for the
+    // encoder element the render would really use. The choice is stored in the
+    // project file (project/renderQuality/<family>, see main.qml), so it is
+    // saved/loaded with the project and marks it modified.
+    property var qualityOpts: []
+    property string qualityFamily: ""
+    property string qualitySignature: ""
+
+    function savedQualityId(family) {
+        return family ? String(Backend.getSetting("project/renderQuality/" + family, "")) : ""
+    }
+
+    // Read from the model, not currentText: inside onCurrentIndexChanged the
+    // ComboBox's currentText can still be the previous entry.
+    function currentCodecName() {
+        var m = codecCombo.model, i = codecCombo.currentIndex
+        return (m && i >= 0 && i < m.length) ? String(m[i]) : ""
+    }
+
+    function rebuildQualityOptions(force) {
+        if (!Backend || !Backend.renderEngine) return
+        var info = Backend.renderEngine.qualityOptions(backendKey(), currentCodecName())
+        var fam = info.family || ""
+        var opts = info.options || []
+        var saved = savedQualityId(fam)
+        var sig = fam + "|" + opts.length + "|" + saved + "|" + backendKey() + "|" + currentCodecName()
+        if (!force && sig === qualitySignature) return
+        qualitySignature = sig
+        qualityFamily = fam
+        qualityOpts = opts
+        var idx = -1
+        for (var i = 0; i < opts.length; i++) if (opts[i].id === saved) idx = i
+        // Unknown/garbage saved value -> the family's default
+        if (idx < 0) for (var j = 0; j < opts.length; j++) if (opts[j].isDefault) idx = j
+        qualityCombo.currentIndex = opts.length > 0 ? Math.max(0, idx) : -1
+    }
+
+    function selectedQualityId() {
+        var i = qualityCombo.currentIndex
+        return (qualityOpts.length > 0 && i >= 0 && i < qualityOpts.length) ? qualityOpts[i].id : ""
+    }
+    function selectedQualityShort() {
+        var i = qualityCombo.currentIndex
+        return (qualityOpts.length > 0 && i >= 0 && i < qualityOpts.length) ? qualityOpts[i].shortLabel : ""
+    }
+
     function doStartRender(outputPath) {
         console.log("Starting render to:", outputPath)
         var mainWindow = renderSettings.Window.window
@@ -40,12 +93,12 @@ Rectangle {
         var clips = mainWindow.getTimelineClipsForRender()
         var totalDuration = mainWindow.getTimelineDurationForRender()
         if (!clips || clips.length === 0) { console.log("Error: No clips"); return }
-        var gpuEncoderType = "cpu"
-        if (selectedGStreamerEncoderId.indexOf("nvidia") !== -1) gpuEncoderType = "nvidia"
-        else if (selectedGStreamerEncoderId.indexOf("vaapi") !== -1) gpuEncoderType = "vaapi"
+        var gpuEncoderType = backendKey()
         var settings = {
             "format": formatCombo.currentText, "codec": codecCombo.currentText, "resolution": resolutionCombo.currentText,
             "framerate": framerateCombo.currentText, "bitrate": parseInt(bitrateField.text) || 50, "gpuEncoder": gpuEncoderType,
+            // Speed/quality option id ("" = no such setting / encoder default)
+            "quality": selectedQualityId(),
             // Resolves relative LUT/overlay asset paths embedded in a
             // clip's effects JSON (ClipEffects::resolveAssetPath()).
             "projectDir": Backend.getSetting("project/location", ""),
@@ -65,7 +118,8 @@ Rectangle {
 
         var queued = pendingQueuedIds.indexOf(jobId) !== -1
         jobStarted(jobId, queued, filenameField.text, locationField.text, resolutionCombo.currentText, framerateCombo.currentText,
-                   codecCombo.currentText, formatCombo.currentText, bitrateField.text + " Mbps", "Export", encoderCombo.currentText)
+                   codecCombo.currentText, formatCombo.currentText,
+                   bitrateField.text + " Mbps" + (selectedQualityShort() !== "" ? " \u00b7 " + selectedQualityShort() : ""), "Export", encoderCombo.currentText)
         pendingQueuedIds = []
     }
 
@@ -240,12 +294,12 @@ Rectangle {
         resolutionCombo.currentIndex = idx >= 0 ? idx : 0
     }
 
-    onVisibleChanged: if (visible) { rebuildResolutionList(false); rebuildFramerateList(false); updateBitrateDefault() }
+    onVisibleChanged: if (visible) { rebuildResolutionList(false); rebuildFramerateList(false); updateBitrateDefault(); rebuildQualityOptions(false) }
     // Profile changes made in the Project Settings dialog (or an "auto"
     // profile resolving) have no change signal, so poll cheaply while visible.
     Timer {
         interval: 1000; repeat: true; running: renderSettings.visible
-        onTriggered: { renderSettings.rebuildResolutionList(false); renderSettings.rebuildFramerateList(false); renderSettings.updateBitrateDefault() }
+        onTriggered: { renderSettings.rebuildResolutionList(false); renderSettings.rebuildFramerateList(false); renderSettings.updateBitrateDefault(); renderSettings.rebuildQualityOptions(false) }
     }
 
     // ---- Frame-rate list, built like the resolution list ------------------
@@ -432,6 +486,7 @@ Rectangle {
             var encoders = device.encoders;
             codecCombo.model = (encoders && encoders.length > 0) ? encoders : ["H.264"];
             codecCombo.currentIndex = 0;
+            rebuildQualityOptions(false)
         }
     }
 
@@ -473,17 +528,16 @@ Rectangle {
                         CheckBox { id: videoCheckbox; text: "Video Enabled"; checked: true; contentItem: Text { text: parent.text; color: colorText; leftPadding: parent.indicator.width + 10; font.bold: true } }
                         
                         Label { text: "Encoder Device:"; color: colorLabel; font.pixelSize: 12 }
-                        ComboBox { id: encoderCombo; Layout.fillWidth: true; Layout.preferredHeight: inputHeight; enabled: videoCheckbox.checked; onCurrentIndexChanged: updateCodecs(currentIndex); contentItem: Text { text: parent.displayText; color: colorText; verticalAlignment: Text.AlignVCenter; leftPadding: 8; elide: Text.ElideRight } background: Rectangle { color: colorPanel; border.color: colorBorder; radius: 3 } }
+                        ComboBox { id: encoderCombo; objectName: "encoderCombo"; Layout.fillWidth: true; Layout.preferredHeight: inputHeight; enabled: videoCheckbox.checked; onCurrentIndexChanged: updateCodecs(currentIndex); contentItem: Text { text: parent.displayText; color: colorText; verticalAlignment: Text.AlignVCenter; leftPadding: 8; elide: Text.ElideRight } background: Rectangle { color: colorPanel; border.color: colorBorder; radius: 3 } }
                         
                         Label { text: "Codec:"; color: colorLabel; font.pixelSize: 12 }
-                        ComboBox { id: codecCombo; Layout.fillWidth: true; Layout.preferredHeight: inputHeight; enabled: videoCheckbox.checked; contentItem: Text { text: parent.displayText; color: colorText; verticalAlignment: Text.AlignVCenter; leftPadding: 8 } background: Rectangle { color: colorPanel; border.color: colorBorder; radius: 3 } }
+                        ComboBox { id: codecCombo; objectName: "codecCombo"; onCurrentIndexChanged: renderSettings.rebuildQualityOptions(false); Layout.fillWidth: true; Layout.preferredHeight: inputHeight; enabled: videoCheckbox.checked; contentItem: Text { text: parent.displayText; color: colorText; verticalAlignment: Text.AlignVCenter; leftPadding: 8 } background: Rectangle { color: colorPanel; border.color: colorBorder; radius: 3 } }
                         // Why a codec you expected may be missing: the list is
                         // probed from the selected device's REAL encoder
                         // elements (BackendManager::detectCodecsForElement()).
                         // NVENC has no VP9 encoder on any NVIDIA GPU (VP9 is
-                        // decode-only there), and GStreamer's VA plugin ships
-                        // no VP9 encoder either - so VP9 only ever appears
-                        // under Software (CPU).
+                        // decode-only there); vavp9enc exists in GStreamer's
+                        // VA plugin but only shows up when the driver offers it.
                         Label {
                             Layout.fillWidth: true
                             wrapMode: Text.WordWrap
@@ -491,7 +545,7 @@ Rectangle {
                             font.pixelSize: 11
                             font.italic: true
                             text: codecCombo.model && codecCombo.model.indexOf("VP9") === -1
-                                  ? "Only codecs this device can really encode are listed. VP9 hardware encoding is not available on NVIDIA (NVENC decodes VP9 but cannot encode it) nor via the VA-API plugin - pick Software (CPU) for VP9."
+                                  ? "Only codecs this device can really encode are listed. VP9 hardware encoding is not available on NVIDIA (NVENC decodes VP9 but cannot encode it); VA-API lists it only if the driver supports it - otherwise pick Software (CPU) for VP9."
                                   : "Only codecs this device can really encode are listed."
                         }
                         Label { text: "Format:"; color: colorLabel; font.pixelSize: 12 }
@@ -502,6 +556,48 @@ Rectangle {
                         ComboBox { id: framerateCombo; Layout.fillWidth: true; Layout.preferredHeight: inputHeight; model: []; enabled: videoCheckbox.checked; contentItem: Text { text: parent.displayText; color: colorText; verticalAlignment: Text.AlignVCenter; leftPadding: 8 } background: Rectangle { color: colorPanel; border.color: colorBorder; radius: 3 } }
                         Label { text: "Bitrate (Mbps):"; color: colorLabel; font.pixelSize: 12 }
                         TextField { id: bitrateField; onTextEdited: renderSettings.bitrateUserEdited = true; Layout.fillWidth: true; Layout.preferredHeight: inputHeight; text: "50"; color: colorText; selectByMouse: true; enabled: videoCheckbox.checked; validator: IntValidator { bottom: 1; top: 500 } background: Rectangle { color: colorPanel; border.color: colorBorder; radius: 3 } }
+                        Label { text: "Quality / speed:"; color: colorLabel; font.pixelSize: 12; visible: renderSettings.qualityOpts.length > 0 }
+                        ComboBox {
+                            id: qualityCombo
+                            objectName: "qualityCombo"
+                            visible: renderSettings.qualityOpts.length > 0
+                            model: renderSettings.qualityOpts
+                            textRole: "label"
+                            Layout.fillWidth: true; Layout.preferredHeight: inputHeight; enabled: videoCheckbox.checked
+                            // User action only (not programmatic list rebuilds): store in the project.
+                            onActivated: function(index) {
+                                if (renderSettings.qualityFamily !== "" && index >= 0 && index < renderSettings.qualityOpts.length) {
+                                    Backend.setSetting("project/renderQuality/" + renderSettings.qualityFamily, renderSettings.qualityOpts[index].id)
+                                    renderSettings.rebuildQualityOptions(false)
+                                }
+                            }
+                            delegate: ItemDelegate {
+                                required property var modelData
+                                required property int index
+                                width: qualityCombo.width
+                                text: modelData.label
+                                highlighted: qualityCombo.highlightedIndex === index
+                                hoverEnabled: true
+                                ToolTip.visible: hovered
+                                ToolTip.delay: 400
+                                ToolTip.text: modelData.description
+                            }
+                            contentItem: Text { text: parent.displayText; color: colorText; verticalAlignment: Text.AlignVCenter; leftPadding: 8; elide: Text.ElideRight }
+                            background: Rectangle { color: colorPanel; border.color: colorBorder; radius: 3 }
+                            ToolTip.visible: hovered && qualityCombo.currentIndex >= 0
+                            ToolTip.delay: 600
+                            ToolTip.text: qualityCombo.currentIndex >= 0 && qualityCombo.currentIndex < renderSettings.qualityOpts.length
+                                          ? renderSettings.qualityOpts[qualityCombo.currentIndex].description : ""
+                        }
+                        Label {
+                            objectName: "qualityHelper"
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                            color: colorLabel; font.pixelSize: 11; font.italic: true
+                            text: (qualityCombo.currentIndex >= 0 && qualityCombo.currentIndex < renderSettings.qualityOpts.length)
+                                  ? renderSettings.qualityOpts[qualityCombo.currentIndex].description
+                                  : "This encoder has no speed/quality setting."
+                        }
                         Item { Layout.preferredHeight: 20 }
                     }
                 }
